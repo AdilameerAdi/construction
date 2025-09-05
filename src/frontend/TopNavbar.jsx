@@ -5,7 +5,11 @@ export default function TopNavbar({ menuOpen, setMenuOpen }) {
   return (
     <>
       {/* Desktop Top Navbar */}
-      <div className="hidden md:block bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 h-16 shadow-lg mb-4"></div>
+<div className="hidden md:flex items-center justify-center bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 h-16 shadow-lg mb-4">
+  <span className="text-white text-lg font-semibold">
+    Welcome to MANTRI CONSTRUCTIONS – Building Excellence Together
+  </span>
+</div>
 
       {/* Mobile Top Bar */}
       <div className="md:hidden bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg flex items-center justify-between px-4 h-16">

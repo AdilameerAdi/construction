@@ -1,10 +1,15 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./frontend/login";
-import DashboardLayout from "./frontend/DashboardLayout"; // We'll separate layout
+import DashboardLayout from "./frontend/DashboardLayout";
 import Activity from "./frontend/activity";
 import Task from "./frontend/task";
 import Contractors from "./frontend/contractor";
-
+import Dashboard from "./frontend/Dashboard"; // import your full dashboard componen
+import Vendors from "./frontend/Vendors";
+import Material from "./frontend/Material";
+import Unit from "./frontend/Unit";
+import Profile from "./frontend/profile";
+import Admin from "./frontend/admin";
 function App() {
   return (
     <Router>
@@ -14,10 +19,16 @@ function App() {
 
         {/* Dashboard layout with nested routes */}
         <Route path="/dashboard/*" element={<DashboardLayout />}>
-          <Route index element={<h2 className="p-6 text-2xl font-bold">Welcome to Dashboard</h2>} />
+          {/* Use Dashboard component as the default page */}
+          <Route index element={<Dashboard />} />
           <Route path="activity" element={<Activity />} />
           <Route path="task" element={<Task />} />
           <Route path="contractors" element={<Contractors />} />
+          <Route path="vendors" element={<Vendors />} />
+          <Route path="material" element={<Material/>} />
+          <Route path="unit" element={<Unit/>} />
+          <Route path="profile" element={<Profile/>} />
+          <Route path="admin" element={<Admin/>} />
         </Route>
       </Routes>
     </Router>
