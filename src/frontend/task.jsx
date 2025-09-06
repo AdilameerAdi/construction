@@ -1,18 +1,19 @@
 import { useState } from "react";
 import { FaPlus } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 export default function Task() {
   const [tasks, setTasks] = useState([]);
+  const navigate = useNavigate();
 
-  const addTask = () => {
-    const newTask = prompt("Add new Task:");
-    if (newTask) setTasks([...tasks, newTask]);
+  const goToAddTask = () => {
+    navigate("/dashboard/addtask");
   };
 
   return (
     <div className="ml-6 mt-2 space-y-2">
       <button
-        onClick={addTask}
+        onClick={goToAddTask}
         className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
       >
         <FaPlus className="mr-2" /> Add New Task

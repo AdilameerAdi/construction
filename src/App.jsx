@@ -36,7 +36,9 @@ import AddStock from "./frontend/AddStock";
 // Files
 import LegalFiles from "./frontend/LegalFiles";
 import TechnicalFiles from "./frontend/TechnicalFiles";
-
+//
+import AddTask from "./frontend/AddTask";
+import AddActivity from "./frontend/addactivity";
 function App() {
   return (
     <Router>
@@ -72,7 +74,9 @@ function App() {
 
           {/* Other Dashboard Pages */}
           <Route path="activity" element={<Activity />} />
+          <Route path="add-activity" element={<AddActivity />} />
           <Route path="task" element={<Task />} />
+          <Route path="addtask" element={<AddTask />} />
           <Route path="contractors" element={<Contractors />} />
           <Route path="vendors" element={<Vendors />} />
           <Route path="material" element={<Material />} />

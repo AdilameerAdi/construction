@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { FaPlus } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 export default function Activity() {
   const [activities, setActivities] = useState([]);
+  const navigate = useNavigate();
 
-  const addActivity = () => {
-    const newActivity = prompt("Add new Activity:");
-    if (newActivity) setActivities([...activities, newActivity]);
+  // Redirect to AddActivity page
+  const goToAddActivity = () => {
+    navigate("/dashboard/add-activity");
   };
 
   return (
@@ -15,7 +17,7 @@ export default function Activity() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Activity</h1>
         <button
-          onClick={addActivity}
+          onClick={goToAddActivity}
           className="flex items-center px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
         >
           <FaPlus className="mr-2" /> Add New Activity
