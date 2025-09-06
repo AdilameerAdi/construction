@@ -1,6 +1,13 @@
+// src/App.js
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
+// Auth
 import Login from "./frontend/login";
+
+// Layout
 import DashboardLayout from "./frontend/DashboardLayout";
+
+// Dashboard Pages
 import Dashboard from "./frontend/Dashboard";
 import Activity from "./frontend/activity";
 import Task from "./frontend/task";
@@ -10,19 +17,26 @@ import Material from "./frontend/Material";
 import Unit from "./frontend/Unit";
 import Profile from "./frontend/profile";
 import Admin from "./frontend/admin";
+
+// Customer & Leads
 import CustomerList from "./frontend/CustomerList";
 import AddCustomer from "./frontend/AddCustomer";
-// Finance & Project Pages
-import NewProject from "./frontend/NewProjectModal"; // New Project page
-import ProjectFinance from "./frontend/ProjectFinance";
-import AddFinance from "./frontend/AddFinance";
 import LeadList from "./frontend/LeadList";
 import AddLead from "./frontend/AddLead";
-// Stock Pages
+
+// Finance & Project
+import NewProject from "./frontend/NewProjectModal"; // ensure this is a page
+import ProjectFinance from "./frontend/ProjectFinance";
+import AddFinance from "./frontend/AddFinance";
+
+// Stock
 import StockManagement from "./frontend/StockManagement";
 import AddStock from "./frontend/AddStock";
- import LegalFiles from "./frontend/LegalFiles";
- import TechnicalFiles from "./frontend/TechnicalFiles";
+
+// Files
+import LegalFiles from "./frontend/LegalFiles";
+import TechnicalFiles from "./frontend/TechnicalFiles";
+
 function App() {
   return (
     <Router>
@@ -45,12 +59,17 @@ function App() {
           {/* Stock Pages */}
           <Route path="stock-management" element={<StockManagement />} />
           <Route path="add-stock" element={<AddStock />} />
-<Route path="legal-files" element={<LegalFiles />} />
-<Route path="technical-files" element={<TechnicalFiles />} />
-<Route path="customers" element={<CustomerList />} />
-<Route path="addcustomer" element={<AddCustomer />} />
- <Route path="leads" element={<LeadList />} />
-  <Route path="add-lead" element={<AddLead />} />
+
+          {/* File Pages */}
+          <Route path="legal-files" element={<LegalFiles />} />
+          <Route path="technical-files" element={<TechnicalFiles />} />
+
+          {/* Customers & Leads */}
+          <Route path="customers" element={<CustomerList />} />
+          <Route path="add-customer" element={<AddCustomer />} />
+          <Route path="leads" element={<LeadList />} />
+          <Route path="add-lead" element={<AddLead />} />
+
           {/* Other Dashboard Pages */}
           <Route path="activity" element={<Activity />} />
           <Route path="task" element={<Task />} />
