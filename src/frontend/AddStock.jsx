@@ -17,7 +17,7 @@ export default function AddStock() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setNewStock(prev => ({ ...prev, [name]: value }));
+    setNewStock((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e) => {
@@ -33,14 +33,16 @@ export default function AddStock() {
       quantity: "",
       stock: ""
     });
-    navigate("/dashboard/stock-management"); // go back to stock page
+    navigate("/dashboard/stock-management");
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Add/Edit Stock Transaction</h2>
+    <div className="max-w-3xl mx-auto mt-10 p-8 bg-white rounded-2xl shadow-md">
+      <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+        Add/Edit Stock Transaction
+      </h2>
 
-      <form onSubmit={handleSubmit} className="bg-white shadow-lg rounded-2xl p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {/* Date */}
         <div>
           <label className="block text-gray-700 font-medium mb-1">Date*</label>
@@ -50,7 +52,7 @@ export default function AddStock() {
             value={newStock.date}
             onChange={handleChange}
             required
-            className="w-full border px-4 py-2 rounded-lg"
+            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] outline-none"
           />
         </div>
 
@@ -62,9 +64,9 @@ export default function AddStock() {
             name="project"
             value={newStock.project}
             onChange={handleChange}
-            placeholder="Project Name"
+            placeholder="Enter Project Name"
             required
-            className="w-full border px-4 py-2 rounded-lg"
+            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] outline-none"
           />
         </div>
 
@@ -76,9 +78,9 @@ export default function AddStock() {
             name="material"
             value={newStock.material}
             onChange={handleChange}
-            placeholder="Material Name"
+            placeholder="Enter Material Name"
             required
-            className="w-full border px-4 py-2 rounded-lg"
+            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] outline-none"
           />
         </div>
 
@@ -89,7 +91,7 @@ export default function AddStock() {
             name="type"
             value={newStock.type}
             onChange={handleChange}
-            className="w-full border px-4 py-2 rounded-lg"
+            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] outline-none"
           >
             <option>Inward</option>
             <option>Outward</option>
@@ -104,9 +106,9 @@ export default function AddStock() {
             name="vendor"
             value={newStock.vendor}
             onChange={handleChange}
-            placeholder="Vendor/Contractor"
+            placeholder="Enter Vendor/Contractor"
             required
-            className="w-full border px-4 py-2 rounded-lg"
+            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] outline-none"
           />
         </div>
 
@@ -118,9 +120,9 @@ export default function AddStock() {
             name="quantity"
             value={newStock.quantity}
             onChange={handleChange}
-            placeholder="Quantity"
+            placeholder="Enter Quantity"
             required
-            className="w-full border px-4 py-2 rounded-lg"
+            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] outline-none"
           />
         </div>
 
@@ -132,24 +134,24 @@ export default function AddStock() {
             name="stock"
             value={newStock.stock}
             onChange={handleChange}
-            placeholder="Total Stock"
+            placeholder="Enter Total Stock"
             required
-            className="w-full border px-4 py-2 rounded-lg"
+            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] outline-none"
           />
         </div>
 
         {/* Buttons */}
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-3 pt-4">
           <button
             type="button"
             onClick={() => navigate("/dashboard/stock-management")}
-            className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+            className="px-5 py-2 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-5 py-2 bg-[#2044E4] text-white font-medium rounded-lg hover:bg-blue-700 transition"
           >
             Add Stock
           </button>

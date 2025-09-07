@@ -20,7 +20,7 @@ import Admin from "./frontend/admin";
 
 // Customer & Leads
 import CustomerList from "./frontend/CustomerList";
-import AddCustomer from "./frontend/AddCustomer";
+
 import LeadList from "./frontend/LeadList";
 import AddLead from "./frontend/AddLead";
 
@@ -39,6 +39,14 @@ import TechnicalFiles from "./frontend/TechnicalFiles";
 //
 import AddTask from "./frontend/AddTask";
 import AddActivity from "./frontend/addactivity";
+//
+import AddContractor from "./frontend/addcontractor";
+//
+import AddVendor from "./frontend/AddVendor";
+//
+import AddUnit from "./frontend/AddUnit";
+//
+import AddMaterial from "./frontend/AddMaterial";
 function App() {
   return (
     <Router>
@@ -68,7 +76,7 @@ function App() {
 
           {/* Customers & Leads */}
           <Route path="customers" element={<CustomerList />} />
-          <Route path="add-customer" element={<AddCustomer />} />
+         
           <Route path="leads" element={<LeadList />} />
           <Route path="add-lead" element={<AddLead />} />
 
@@ -78,9 +86,16 @@ function App() {
           <Route path="task" element={<Task />} />
           <Route path="addtask" element={<AddTask />} />
           <Route path="contractors" element={<Contractors />} />
+           <Route path="add-contractor" element={<AddContractor />} />
           <Route path="vendors" element={<Vendors />} />
+          <Route path="add-vendor" element={<AddVendor />} />
+
           <Route path="material" element={<Material />} />
+          <Route path="add-material" element={<AddMaterial />} />
+
           <Route path="unit" element={<Unit />} />
+          <Route path="add-unit" element={<AddUnit />} />
+
           <Route path="profile" element={<Profile />} />
           <Route path="admin" element={<Admin />} />
         </Route>

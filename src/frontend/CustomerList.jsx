@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+
 
 export default function CustomerList() {
-  const navigate = useNavigate();
+ 
   const [customers, setCustomers] = useState([
     {
       id: 1,
@@ -26,14 +26,7 @@ export default function CustomerList() {
       <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Customer Records</h2>
 
       {/* Add New Customer Button */}
-      <div className="mb-4 text-right">
-        <button
-          onClick={() => navigate("/dashboard/addcustomer")}
-          className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700"
-        >
-          Add New Customer
-        </button>
-      </div>
+      
 
       {/* Customers Table */}
       <div className="overflow-x-auto bg-white shadow-lg rounded-2xl">

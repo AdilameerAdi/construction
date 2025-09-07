@@ -1,93 +1,193 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { 
+  FaHome, FaTasks, FaClipboardList, FaUsers, FaStore, FaBoxOpen, FaUserShield, FaUser, FaChevronRight, FaChevronDown 
+} from "react-icons/fa";
 
-export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
+export default function Sidebar() {
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [openDropdown, setOpenDropdown] = useState(""); // tracks which dropdown is open
 
   const handleLogout = () => {
     navigate("/");
     setIsSidebarOpen(false);
   };
 
-  const handleLinkClick = () => {
-    setIsSidebarOpen(false);
+  const toggleDropdown = (dropdownName) => {
+    setOpenDropdown(openDropdown === dropdownName ? "" : dropdownName);
   };
 
+  const menuClass = "flex items-center justify-between w-full px-4 py-2 rounded-md hover:bg-blue-700 hover:text-white transition-colors";
+
   return (
-    <aside
-      className={`fixed top-0 right-0 h-screen w-64 bg-gradient-to-b from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg transform transition-transform duration-300 z-50
-      ${isSidebarOpen ? "translate-x-0" : "translate-x-full"}`}
-    >
-      {/* Sidebar as flex column */}
-      <div className="flex flex-col h-full">
+    <>
+      {/* Hamburger Button for closed sidebar */}
+      {!isSidebarOpen && (
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed top-4 right-4 z-50 text-2xl text-blue-600 font-bold bg-white rounded-full p-2 shadow-lg transition-transform hover:scale-110"
+        >
+          ☰
+        </button>
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed top-0 right-0 h-screen w-64 bg-gradient-to-b from-blue-700 via-indigo-700 to-purple-700 text-white shadow-lg border-l border-gray-300 transform transition-transform duration-300 z-40
+        ${isSidebarOpen ? "translate-x-0" : "translate-x-full"}`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between h-16 border-b border-white/20 px-4">
           <div className="flex items-center">
-            <div className="bg-white text-blue-600 font-bold rounded-full w-10 h-10 flex items-center justify-center shadow-lg">
+            <div className="bg-white text-blue-700 font-bold rounded-full w-10 h-10 flex items-center justify-center shadow-md">
               MC
             </div>
-            <span className="ml-3 font-bold text-lg">MANTRI</span>
+            <span className="ml-3 font-bold text-lg tracking-wide">MANTRI</span>
           </div>
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="text-white text-2xl font-bold hover:text-gray-200"
+            className="text-white text-2xl font-bold hover:text-gray-200 transition-colors"
           >
             ✕
           </button>
         </div>
 
-        {/* Navigation (scrollable if too long) */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto p-4 space-y-3">
+          {/* Home */}
           <Link
             to="/dashboard"
-            onClick={handleLinkClick}
-            className="flex items-center w-full px-4 py-2 rounded-lg hover:bg-white/20"
+            className="flex items-center justify-between px-4 py-2 rounded-md font-bold text-white hover:bg-blue-800 transition-colors"
           >
-            Home
+            <div className="flex items-center space-x-2">
+              <FaHome /> <span>Home</span>
+            </div>
           </Link>
 
           {/* Work Activity */}
           <div>
-            <span className="block px-4 py-2 font-semibold">Work Activity</span>
-            <div className="ml-6 mt-1 space-y-1">
-              <Link to="/dashboard/activity" onClick={handleLinkClick} className="block px-4 py-2 rounded-lg hover:bg-white/30">Activity</Link>
-              <Link to="/dashboard/task" onClick={handleLinkClick} className="block px-4 py-2 rounded-lg hover:bg-white/30">Task</Link>
-            </div>
+            <button
+              onClick={() => toggleDropdown("work")}
+              className={menuClass}
+            >
+              <div className="flex items-center space-x-2 font-bold">
+                <FaTasks /> <span>Work Activity</span>
+              </div>
+              {openDropdown === "work" ? <FaChevronDown /> : <FaChevronRight />}
+            </button>
+            {openDropdown === "work" && (
+              <div className="ml-6 mt-1 space-y-1">
+                <Link
+                  to="/dashboard/activity"
+                  className="block px-4 py-2 rounded-md text-white hover:bg-blue-800 transition-colors"
+                >
+                  Activity
+                </Link>
+                <Link
+                  to="/dashboard/task"
+                  className="block px-4 py-2 rounded-md text-white hover:bg-blue-800 transition-colors"
+                >
+                  Task
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Agencies */}
           <div>
-            <span className="block px-4 py-2 font-semibold">Agencies</span>
-            <div className="ml-6 mt-1 space-y-1">
-              <Link to="/dashboard/contractors" onClick={handleLinkClick} className="block px-4 py-2 rounded-lg hover:bg-white/30">Contractors</Link>
-              <Link to="/dashboard/vendors" onClick={handleLinkClick} className="block px-4 py-2 rounded-lg hover:bg-white/30">Vendors</Link>
-            </div>
+            <button
+              onClick={() => toggleDropdown("agencies")}
+              className={menuClass}
+            >
+              <div className="flex items-center space-x-2 font-bold">
+                <FaUsers /> <span>Agencies</span>
+              </div>
+              {openDropdown === "agencies" ? <FaChevronDown /> : <FaChevronRight />}
+            </button>
+            {openDropdown === "agencies" && (
+              <div className="ml-6 mt-1 space-y-1">
+                <Link
+                  to="/dashboard/contractors"
+                  className="block px-4 py-2 rounded-md text-white hover:bg-blue-800 transition-colors"
+                >
+                  Contractors
+                </Link>
+                <Link
+                  to="/dashboard/vendors"
+                  className="block px-4 py-2 rounded-md text-white hover:bg-blue-800 transition-colors"
+                >
+                  Vendors
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Inventory */}
           <div>
-            <span className="block px-4 py-2 font-semibold">Inventory</span>
-            <div className="ml-6 mt-1 space-y-1">
-              <Link to="/dashboard/material" onClick={handleLinkClick} className="block px-4 py-2 rounded-lg hover:bg-white/30">Material</Link>
-              <Link to="/dashboard/unit" onClick={handleLinkClick} className="block px-4 py-2 rounded-lg hover:bg-white/30">Unit</Link>
-            </div>
+            <button
+              onClick={() => toggleDropdown("inventory")}
+              className={menuClass}
+            >
+              <div className="flex items-center space-x-2 font-bold">
+                <FaStore /> <span>Inventory</span>
+              </div>
+              {openDropdown === "inventory" ? <FaChevronDown /> : <FaChevronRight />}
+            </button>
+            {openDropdown === "inventory" && (
+              <div className="ml-6 mt-1 space-y-1">
+                <Link
+                  to="/dashboard/material"
+                  className="block px-4 py-2 rounded-md text-white hover:bg-blue-800 transition-colors"
+                >
+                  Material
+                </Link>
+                <Link
+                  to="/dashboard/unit"
+                  className="block px-4 py-2 rounded-md text-white hover:bg-blue-800 transition-colors"
+                >
+                  Unit
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Manage */}
           <div>
-            <span className="block px-4 py-2 font-semibold">Manage</span>
-            <div className="ml-6 mt-1 space-y-1">
-              <Link to="/dashboard/admin" onClick={handleLinkClick} className="block px-4 py-2 rounded-lg hover:bg-white/30">Admin</Link>
-              <Link to="/dashboard/profile" onClick={handleLinkClick} className="block px-4 py-2 rounded-lg hover:bg-white/30">Profile</Link>
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 py-2 rounded-lg hover:bg-white/30"
-              >
-                Logout
-              </button>
-            </div>
+            <button
+              onClick={() => toggleDropdown("manage")}
+              className={menuClass}
+            >
+              <div className="flex items-center space-x-2 font-bold">
+                <FaUserShield /> <span>Manage</span>
+              </div>
+              {openDropdown === "manage" ? <FaChevronDown /> : <FaChevronRight />}
+            </button>
+            {openDropdown === "manage" && (
+              <div className="ml-6 mt-1 space-y-1">
+                <Link
+                  to="/dashboard/admin"
+                  className="block px-4 py-2 rounded-md text-white hover:bg-blue-800 transition-colors"
+                >
+                  Admin
+                </Link>
+                <Link
+                  to="/dashboard/profile"
+                  className="block px-4 py-2 rounded-md text-white hover:bg-blue-800 transition-colors"
+                >
+                  Profile
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 rounded-md text-white hover:bg-red-600 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </nav>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

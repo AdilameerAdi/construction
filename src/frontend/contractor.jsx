@@ -1,22 +1,24 @@
 import { useState } from "react";
 import { FaPlus } from "react-icons/fa";
+import { useNavigate } from "react-router-dom"; // <-- Import useNavigate
 
 export default function Contractors() {
   const [contractors, setContractors] = useState([]);
+  const navigate = useNavigate(); // <-- Initialize navigate
 
-  const addContractor = () => {
-    const newContractor = prompt("Add new Contractor:");
-    if (newContractor) setContractors([...contractors, newContractor]);
+  const goToAddContractor = () => {
+    navigate("/dashboard/add-contractor"); // <-- Route to AddContractor form
   };
 
   return (
     <div className="ml-6 mt-2 space-y-2">
       <button
-        onClick={addContractor}
+        onClick={goToAddContractor} // <-- Call navigate function here
         className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
       >
         <FaPlus className="mr-2" /> Add New Contractor
       </button>
+
       <table className="min-w-full bg-white rounded-lg shadow overflow-hidden">
         <thead className="bg-gray-200">
           <tr>
@@ -27,7 +29,9 @@ export default function Contractors() {
         <tbody>
           {contractors.length === 0 ? (
             <tr>
-              <td colSpan={2} className="text-center py-2">No Contractor found</td>
+              <td colSpan={2} className="text-center py-2">
+                No Contractor found
+              </td>
             </tr>
           ) : (
             contractors.map((contractor, index) => (

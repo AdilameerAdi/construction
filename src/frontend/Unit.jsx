@@ -1,13 +1,14 @@
 // src/pages/Unit.jsx
 import { useState } from "react";
 import { FaPlus } from "react-icons/fa";
+import { useNavigate } from "react-router-dom"; // <-- import useNavigate
 
 export default function Unit() {
   const [units, setUnits] = useState([]);
+  const navigate = useNavigate(); // <-- initialize navigate
 
-  const addUnit = () => {
-    const newUnit = prompt("Add new Unit:");
-    if (newUnit) setUnits([...units, newUnit]);
+  const goToAddUnit = () => {
+    navigate("/dashboard/add-unit"); // <-- navigate to AddUnit page
   };
 
   return (
@@ -16,14 +17,14 @@ export default function Unit() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Units</h1>
         <button
-          onClick={addUnit}
+          onClick={goToAddUnit} // <-- use navigate function
           className="flex items-center px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
         >
           <FaPlus className="mr-2" /> Add New Unit
         </button>
       </div>
 
-      {/* Unit Table */}
+      {/* Units Table */}
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-200">

@@ -1,13 +1,14 @@
 // src/pages/Vendors.jsx
 import { useState } from "react";
 import { FaPlus } from "react-icons/fa";
+import { useNavigate } from "react-router-dom"; // <-- import useNavigate
 
 export default function Vendors() {
   const [vendors, setVendors] = useState([]);
+  const navigate = useNavigate(); // <-- initialize navigate
 
-  const addVendor = () => {
-    const newVendor = prompt("Add new Vendor:");
-    if (newVendor) setVendors([...vendors, newVendor]);
+  const goToAddVendor = () => {
+    navigate("/dashboard/add-vendor"); // <-- route to AddVendor page
   };
 
   return (
@@ -16,7 +17,7 @@ export default function Vendors() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Vendors</h1>
         <button
-          onClick={addVendor}
+          onClick={goToAddVendor} // <-- navigate function
           className="flex items-center px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
         >
           <FaPlus className="mr-2" /> Add New Vendor

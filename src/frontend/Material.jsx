@@ -1,13 +1,14 @@
 // src/pages/Material.jsx
 import { useState } from "react";
 import { FaPlus } from "react-icons/fa";
+import { useNavigate } from "react-router-dom"; // <-- import useNavigate
 
 export default function Material() {
   const [materials, setMaterials] = useState([]);
+  const navigate = useNavigate(); // <-- initialize navigate
 
-  const addMaterial = () => {
-    const newMaterial = prompt("Add new Material:");
-    if (newMaterial) setMaterials([...materials, newMaterial]);
+  const goToAddMaterial = () => {
+    navigate("/dashboard/add-material"); // <-- route to AddMaterial page
   };
 
   return (
@@ -16,14 +17,14 @@ export default function Material() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Material</h1>
         <button
-          onClick={addMaterial}
+          onClick={goToAddMaterial} // <-- navigate function
           className="flex items-center px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
         >
           <FaPlus className="mr-2" /> Add New Material
         </button>
       </div>
 
-      {/* Material Table */}
+      {/* Materials Table */}
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-200">
