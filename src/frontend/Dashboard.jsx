@@ -1,15 +1,15 @@
+// src/frontend/Dashboard.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   FaProjectDiagram, FaChartBar, FaWarehouse, FaFileContract, 
-  FaFileAlt, FaUsers, FaFileInvoiceDollar, 
+  FaUsers, FaFileInvoiceDollar, 
   FaProjectDiagram as FaNewProject, FaRegChartBar, FaChevronRight 
 } from "react-icons/fa";
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
-  // Sample project data
   const [projects] = useState([
     { id: 1, name: "Residential Complex A", date: "25-08-2025", status: "Ongoing" },
     { id: 2, name: "Mall Project B", date: "12-07-2025", status: "Pending" },
@@ -19,20 +19,21 @@ export default function Dashboard() {
   const [selectedProject, setSelectedProject] = useState(null);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-      <h2 className="text-3xl font-bold bg-[#155DFC] p-3 text-center text-white mb-6 rounded-lg shadow-lg">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 bg-gray-50 min-h-screen">
+      {/* Header */}
+      <h2 className="text-3xl font-bold bg-[#155DFC]  p-4 text-center text-white mb-8 rounded-xl shadow-lg">
         Welcome to MANTRI CONSTRUCTIONS
       </h2>
 
       <div className="flex gap-6">
         {/* Left Column: Project List */}
-        <div className="bg-white shadow-lg rounded-2xl p-4 w-[220px] flex-shrink-0">
+        <div className="bg-white border border-gray-300 shadow-lg rounded-xl p-4 w-[240px] flex-shrink-0">
           <h3 className="text-lg font-semibold text-gray-800 mb-3">Projects</h3>
           <ul className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
             {projects.map((project) => (
               <li
                 key={project.id}
-                className="p-2 border rounded-lg flex justify-between items-center cursor-pointer hover:bg-gray-100 transition"
+                className="p-2 border border-gray-200 rounded-lg flex justify-between items-center cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition"
                 onClick={() => setSelectedProject(project)}
               >
                 <span className="font-medium text-gray-700 text-sm truncate">{project.name}</span>
@@ -42,21 +43,21 @@ export default function Dashboard() {
           </ul>
         </div>
 
-        {/* Right Column: Dashboard Cards */}
+        {/* Right Column */}
         <div className="flex-1">
-          {/* First row: New Projects & Project Finance & Reports */}
+          {/* Top row cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             <div 
               onClick={() => navigate("/dashboard/new-project")} 
-              className="bg-white shadow-lg rounded-2xl p-6 flex flex-col justify-center items-center hover:shadow-2xl transition cursor-pointer"
+              className="bg-white border border-gray-300 shadow-lg rounded-xl p-6 flex flex-col justify-center items-center hover:shadow-xl hover:border-blue-500 transition cursor-pointer"
             >
-              <FaNewProject className="text-indigo-600 text-3xl mb-2" />
+              <FaNewProject className="text-blue-600 text-3xl mb-2" />
               <h3 className="text-lg font-semibold text-gray-700">New Projects</h3>
             </div>
 
             <div 
               onClick={() => navigate("/dashboard/project-finance")} 
-              className="bg-white shadow-lg rounded-2xl p-6 flex flex-col justify-center items-center hover:shadow-2xl transition cursor-pointer"
+              className="bg-white border border-gray-300 shadow-lg rounded-xl p-6 flex flex-col justify-center items-center hover:shadow-xl hover:border-green-500 transition cursor-pointer"
             >
               <FaFileInvoiceDollar className="text-green-600 text-3xl mb-2" />
               <h3 className="text-lg font-semibold text-gray-700">Finance</h3>
@@ -64,7 +65,7 @@ export default function Dashboard() {
 
             <div 
               onClick={() => navigate("/dashboard/project-finance")} 
-              className="bg-white shadow-lg rounded-2xl p-6 flex flex-col justify-center items-center hover:shadow-2xl transition cursor-pointer"
+              className="bg-white border border-gray-300 shadow-lg rounded-xl p-6 flex flex-col justify-center items-center hover:shadow-xl hover:border-yellow-500 transition cursor-pointer"
             >
               <FaRegChartBar className="text-yellow-600 text-3xl mb-2" />
               <h3 className="text-lg font-semibold text-gray-700">Reports</h3>
@@ -74,7 +75,7 @@ export default function Dashboard() {
           {selectedProject && (
             <>
               {/* Selected Project Info */}
-              <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6 flex justify-between items-center">
+              <div className="bg-white border border-blue-300 p-4 rounded-xl mb-6 shadow-md flex justify-between items-center">
                 <div>
                   <h3 className="text-lg font-bold text-blue-800">{selectedProject.name}</h3>
                   <p className="text-sm text-gray-600">
@@ -91,10 +92,10 @@ export default function Dashboard() {
                 </button>
               </div>
 
-              {/* Horizontal Layout */}
+              {/* Project Details */}
               <div className="grid grid-cols-3 gap-6">
-                {/* Project Overview */}
-                <div className="col-span-1 bg-white shadow-lg rounded-2xl p-6 flex flex-col justify-center items-center hover:shadow-2xl transition cursor-pointer h-72">
+                {/* Overview */}
+                <div className="col-span-1 bg-white border border-gray-300 shadow-md rounded-xl p-6 flex flex-col justify-center items-center hover:shadow-lg hover:border-indigo-500 transition cursor-pointer h-72">
                   <FaProjectDiagram className="text-indigo-600 text-4xl mb-4" />
                   <h3 className="text-xl font-bold text-gray-700 mb-2">Project Overview</h3>
                   <p className="text-gray-600 text-sm text-center">
@@ -103,16 +104,16 @@ export default function Dashboard() {
                   </p>
                 </div>
 
-                {/* Other cards: 2 columns per row */}
+                {/* Right side grid */}
                 <div className="col-span-2 grid grid-cols-2 gap-6">
                   {/* Onsite */}
-                  <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
+                  <div className="bg-white border border-gray-300 shadow-md rounded-xl p-4 hover:shadow-lg hover:border-yellow-400 transition">
                     <div className="flex items-center mb-2">
                       <FaWarehouse className="text-yellow-500 text-xl mr-2" />
                       <h3 className="text-lg font-semibold">Onsite</h3>
                     </div>
                     <button
-                      className="bg-yellow-100 hover:bg-yellow-200 rounded p-2 text-left font-medium w-full"
+                      className="bg-yellow-50 hover:bg-yellow-100 rounded-lg px-3 py-2 text-sm font-medium w-full"
                       onClick={() => navigate("/dashboard/stock-management")}
                     >
                       Stock Management
@@ -120,19 +121,19 @@ export default function Dashboard() {
                   </div>
 
                   {/* Technical */}
-                  <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
+                  <div className="bg-white border border-gray-300 shadow-md rounded-xl p-4 hover:shadow-lg hover:border-green-400 transition">
                     <div className="flex items-center mb-2">
                       <FaChartBar className="text-green-500 text-xl mr-2" />
                       <h3 className="text-lg font-semibold">Technical</h3>
                     </div>
                     <button
-                      className="bg-green-100 hover:bg-green-200 rounded p-2 text-left font-medium w-full mb-1"
+                      className="bg-green-50 hover:bg-green-100 rounded-lg px-3 py-2 text-sm font-medium w-full mb-2"
                       onClick={() => navigate("/dashboard/gantt-chart")}
                     >
                       Gantt Chart
                     </button>
                     <button
-                      className="bg-green-100 hover:bg-green-200 rounded p-2 text-left font-medium w-full"
+                      className="bg-green-50 hover:bg-green-100 rounded-lg px-3 py-2 text-sm font-medium w-full"
                       onClick={() => navigate("/dashboard/technical-files")}
                     >
                       Technical Files
@@ -140,13 +141,13 @@ export default function Dashboard() {
                   </div>
 
                   {/* Legal */}
-                  <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
+                  <div className="bg-white border border-gray-300 shadow-md rounded-xl p-4 hover:shadow-lg hover:border-blue-400 transition">
                     <div className="flex items-center mb-2">
                       <FaFileContract className="text-blue-500 text-xl mr-2" />
                       <h3 className="text-lg font-semibold">Legal</h3>
                     </div>
                     <button
-                      className="bg-blue-100 hover:bg-blue-200 rounded p-2 text-left font-medium w-full"
+                      className="bg-blue-50 hover:bg-blue-100 rounded-lg px-3 py-2 text-sm font-medium w-full"
                       onClick={() => navigate("/dashboard/legal-files")}
                     >
                       Legal Files
@@ -154,19 +155,19 @@ export default function Dashboard() {
                   </div>
 
                   {/* Marketing */}
-                  <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
+                  <div className="bg-white border border-gray-300 shadow-md rounded-xl p-4 hover:shadow-lg hover:border-purple-400 transition">
                     <div className="flex items-center mb-2">
                       <FaUsers className="text-purple-500 text-xl mr-2" />
                       <h3 className="text-lg font-semibold">Marketing</h3>
                     </div>
                     <button
-                      className="bg-purple-100 hover:bg-purple-200 rounded p-2 text-left font-medium w-full mb-1"
+                      className="bg-purple-50 hover:bg-purple-100 rounded-lg px-3 py-2 text-sm font-medium w-full mb-2"
                       onClick={() => navigate("/dashboard/customers")}
                     >
                       Customer Records
                     </button>
                     <button
-                      className="bg-purple-100 hover:bg-purple-200 rounded p-2 text-left font-medium w-full"
+                      className="bg-purple-50 hover:bg-purple-100 rounded-lg px-3 py-2 text-sm font-medium w-full"
                       onClick={() => navigate("/dashboard/leads")}
                     >
                       Leads Records

@@ -6,11 +6,13 @@ export default function AddMaterial() {
     activity: "",
     name: "",
     unit: "",
+    status: "Active", // default value
   });
 
   // Placeholder data (replace with API fetch later)
   const activities = ["Activity 1", "Activity 2", "Activity 3"];
   const units = ["Unit 1", "Unit 2", "Unit 3"];
+  const statuses = ["Active", "Inactive"];
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -99,6 +101,28 @@ export default function AddMaterial() {
               {units.map((unit, index) => (
                 <option key={index} value={unit}>
                   {unit}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Dropdown */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Status <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                         focus:outline-none focus:ring-2 focus:ring-[#2044E4] 
+                         focus:border-[#2044E4] transition"
+              required
+            >
+              {statuses.map((st, index) => (
+                <option key={index} value={st}>
+                  {st}
                 </option>
               ))}
             </select>

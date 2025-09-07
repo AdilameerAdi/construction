@@ -3,7 +3,7 @@ import Sidebar from "./Sidebar";
 
 export default function DashboardLayout() {
   return (
-    <div className="flex min-h-screen bg-gray-100 relative">
+    <div className="flex min-h-screen bg-gray-300 relative">
       {/* Sidebar always visible on right */}
       <Sidebar />
 

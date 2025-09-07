@@ -1,31 +1,11 @@
 // src/frontend/LeadList.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function LeadList() {
   const navigate = useNavigate();
-  const [leads, setLeads] = useState([
-    {
-      id: 1,
-      date: new Date().toLocaleString("en-GB"),
-      fullName: "Alice Johnson",
-      contactNo: "03001234567",
-      nextVisit: "2025-09-10 14:00",
-      note: "Interested in premium package",
-      leadType: "Hot",
-      isConverted: false,
-    },
-    {
-      id: 2,
-      date: "2025-09-05 10:30",
-      fullName: "Bob Smith",
-      contactNo: "03007654321",
-      nextVisit: "2025-09-12 11:00",
-      note: "Interested in basic package",
-      leadType: "Warm",
-      isConverted: false,
-    },
-  ]);
+  const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [filter, setFilter] = useState({
     fromDate: "",
@@ -33,6 +13,23 @@ export default function LeadList() {
     nextVisit: "",
     leadType: "",
   });
+
+  // Fetch data from API
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/leads"); // dummy API
+        const data = await response.json();
+        setLeads(data);
+      } catch (error) {
+        console.error("Error fetching leads:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeads();
+  }, []);
 
   const handleDelete = (id) => {
     setLeads((prev) => prev.filter((lead) => lead.id !== id));
@@ -58,9 +55,15 @@ export default function LeadList() {
     );
   });
 
+  if (loading) {
+    return <p className="text-center mt-6 text-gray-600">Loading leads...</p>;
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Lead Records</h2>
+      <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+        Lead Records
+      </h2>
 
       {/* Add New Lead Button */}
       <div className="mb-4 text-right">
@@ -113,9 +116,8 @@ export default function LeadList() {
             className="border px-3 py-2 rounded-lg"
           >
             <option value="">All</option>
-            
             <option value="Cold">Cold</option>
-            <option value="Warm">moderate</option>
+            <option value="Warm">Warm</option>
             <option value="Hot">Hot</option>
           </select>
         </div>
@@ -161,7 +163,9 @@ export default function LeadList() {
                 <td className="px-4 py-2 border">{lead.nextVisit}</td>
                 <td className="px-4 py-2 border">{lead.note}</td>
                 <td className="px-4 py-2 border">{lead.leadType}</td>
-                <td className="px-4 py-2 border">{lead.isConverted ? "Yes" : "No"}</td>
+                <td className="px-4 py-2 border">
+                  {lead.isConverted ? "Yes" : "No"}
+                </td>
                 <td className="px-4 py-2 border space-x-2">
                   <button className="text-blue-600 hover:underline">Edit</button>
                   <button
