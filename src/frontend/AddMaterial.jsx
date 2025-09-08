@@ -1,27 +1,65 @@
-// src/frontend/AddMaterial.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function AddMaterial() {
   const [formData, setFormData] = useState({
     activity: "",
     name: "",
     unit: "",
-    status: "Active", // default value
+    status: "Active",
   });
 
-  // Placeholder data (replace with API fetch later)
-  const activities = ["Activity 1", "Activity 2", "Activity 3"];
-  const units = ["Unit 1", "Unit 2", "Unit 3"];
-  const statuses = ["Active", "Inactive"];
+  const [activities, setActivities] = useState([]);
+  const [units, setUnits] = useState([]);
+
+  // ✅ Fetch activities & units for dropdown
+  useEffect(() => {
+    const fetchDropdowns = async () => {
+      try {
+        const [actRes, unitRes] = await Promise.all([
+          fetch("http://localhost:8000/api/activities"),
+          fetch("http://localhost:8000/api/units"),
+        ]);
+        const [actData, unitData] = await Promise.all([
+          actRes.json(),
+          unitRes.json(),
+        ]);
+        setActivities(actData);
+        setUnits(unitData);
+      } catch (error) {
+        console.error("Error fetching dropdown data:", error);
+      }
+    };
+    fetchDropdowns();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  // ✅ Submit form to API
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData); // Replace with API call to save material
-    alert("Material added successfully!");
+    try {
+      const res = await fetch("http://localhost:8000/api/materials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (res.ok) {
+        const saved = await res.json();
+        console.log("Material saved:", saved);
+        alert("Material added successfully!");
+        setFormData({ activity: "", name: "", unit: "", status: "Active" });
+      } else {
+        const err = await res.json();
+        console.error("Failed to save material:", err);
+        alert("Error: " + err.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong!");
+    }
   };
 
   return (
@@ -57,9 +95,9 @@ export default function AddMaterial() {
               required
             >
               <option value="">Select Activity</option>
-              {activities.map((act, index) => (
-                <option key={index} value={act}>
-                  {act}
+              {activities.map((act) => (
+                <option key={act._id} value={act._id}>
+                  {act.title}
                 </option>
               ))}
             </select>
@@ -98,9 +136,9 @@ export default function AddMaterial() {
               required
             >
               <option value="">Select Unit</option>
-              {units.map((unit, index) => (
-                <option key={index} value={unit}>
-                  {unit}
+              {units.map((u) => (
+                <option key={u._id} value={u._id}>
+                  {u.name}
                 </option>
               ))}
             </select>
@@ -120,11 +158,8 @@ export default function AddMaterial() {
                          focus:border-[#2044E4] transition"
               required
             >
-              {statuses.map((st, index) => (
-                <option key={index} value={st}>
-                  {st}
-                </option>
-              ))}
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
             </select>
           </div>
 
@@ -143,3 +178,4 @@ export default function AddMaterial() {
     </div>
   );
 }
+

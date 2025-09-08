@@ -11,31 +11,49 @@ export default function Unit() {
     navigate("/dashboard/add-unit");
   };
 
-  // Dummy API call
+  // ✅ Fetch Units from backend API
   useEffect(() => {
-    // Replace this with your real API later
-    fetch("https://jsonplaceholder.com/posts") // dummy API
-      .then((res) => res.json())
-      .then((data) => {
-        // Example: map dummy data into { id, unitName, status }
-        const dummyUnits = data.slice(0, 5).map((item, i) => ({
-          id: item.id,
-          unitName: item.title,
-          status: i % 2 === 0 ? "Active" : "Inactive", // alternate statuses
+    const fetchUnits = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/units");
+        if (!res.ok) throw new Error("Failed to fetch units");
+        const data = await res.json();
+
+        // Map API response to match table structure
+        const formattedUnits = data.map((u) => ({
+          id: u._id,
+          unitName: u.name,
+          status: u.status,
         }));
-        setUnits(dummyUnits);
-      })
-      .catch((err) => console.error("Error fetching units:", err));
+
+        setUnits(formattedUnits);
+      } catch (err) {
+        console.error("Error fetching units:", err);
+      }
+    };
+
+    fetchUnits();
   }, []);
 
+  // ✅ Edit Unit (navigate to edit page)
   const handleEdit = (id) => {
-    alert(`Edit unit with ID: ${id}`);
-    // navigate(`/dashboard/edit-unit/${id}`) if you make an edit page
+    navigate(`/dashboard/edit-unit/${id}`);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this unit?")) {
-      setUnits(units.filter((unit) => unit.id !== id));
+  // ✅ Delete Unit
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this unit?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/units/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete unit");
+
+      setUnits((prev) => prev.filter((unit) => unit.id !== id));
+    } catch (err) {
+      console.error("Error deleting unit:", err);
+      alert("Could not delete unit");
     }
   };
 
@@ -67,7 +85,7 @@ export default function Unit() {
             {units.length === 0 ? (
               <tr>
                 <td colSpan={4} className="text-center py-6 text-gray-400 italic">
-                  Loading units...
+                  No units found
                 </td>
               </tr>
             ) : (

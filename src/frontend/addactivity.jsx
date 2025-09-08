@@ -6,10 +6,30 @@ export default function AddActivity() {
   const [status, setStatus] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log({ title, status }); // Here you can send data to API or context
-    navigate("/dashboard/activity"); // Navigate back to Activity page
+
+    try {
+      const response = await fetch("http://localhost:8000/api/activities", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title, status }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(" Activity saved:", data);
+
+        // Navigate back after success
+        navigate("/dashboard/activity");
+      } else {
+        console.error(" Failed to save activity:", response.statusText);
+      }
+    } catch (error) {
+      console.error("⚠️ Error saving activity:", error);
+    }
   };
 
   return (
@@ -83,3 +103,4 @@ export default function AddActivity() {
     </div>
   );
 }
+

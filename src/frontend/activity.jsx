@@ -12,7 +12,7 @@ export default function Activity() {
   useEffect(() => {
     const fetchActivities = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/activities"); // your API URL
+        const response = await fetch("http://localhost:8000/api/activities"); // your API URL
         if (!response.ok) throw new Error("Failed to fetch activities");
 
         const data = await response.json();

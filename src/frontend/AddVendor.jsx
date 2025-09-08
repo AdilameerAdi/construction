@@ -15,10 +15,39 @@ export default function AddVendor() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData); // Replace with API call to save vendor
-    alert("Vendor submitted successfully!");
+
+    try {
+      const res = await fetch("http://localhost:8000/api/vendors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (res.ok) {
+        const saved = await res.json();
+        console.log("Vendor saved:", saved);
+        alert("Vendor submitted successfully!");
+
+        // reset form
+        setFormData({
+          name: "",
+          gst: "",
+          contact: "",
+          bank: "",
+          accountNo: "",
+          ifsc: "",
+        });
+      } else {
+        const err = await res.json();
+        console.error("Failed to save vendor:", err);
+        alert("Error: " + (err.error || "Failed to save vendor"));
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Something went wrong!");
+    }
   };
 
   return (

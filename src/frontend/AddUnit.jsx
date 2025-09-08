@@ -7,14 +7,30 @@ export default function AddUnit() {
   const [status, setStatus] = useState("Active"); // default value
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const newUnit = { unitName, status };
-    console.log(newUnit); // Replace with API call to save the unit
+    try {
+      const res = await fetch("http://localhost:8000/api/units", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: unitName, status }),
+      });
 
-    alert("Unit added successfully!");
-    navigate("/dashboard/unit"); // Go back to Units list page
+      if (res.ok) {
+        const saved = await res.json();
+        console.log("Unit saved:", saved);
+        alert("Unit added successfully!");
+        navigate("/dashboard/unit"); // Go back to Units list page
+      } else {
+        const err = await res.json();
+        console.error("Failed to save unit:", err);
+        alert("Error: " + (err.error || "Failed to save unit"));
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Something went wrong!");
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function AddContractor() {
   const [formData, setFormData] = useState({
@@ -11,13 +11,62 @@ export default function AddContractor() {
     ifsc: "",
   });
 
+  const [activities, setActivities] = useState([]);
+
+  // 🔹 Fetch Activities for Dropdown
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/activities");
+        if (!res.ok) throw new Error("Failed to fetch activities");
+        const data = await res.json();
+        setActivities(data);
+      } catch (error) {
+        console.error("Error fetching activities:", error);
+      }
+    };
+    fetchActivities();
+  }, []);
+
+  // 🔹 Handle Input Change
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  // 🔹 Submit Form (POST to API)
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData); // You can replace this with API call later
+    try {
+      const res = await fetch("http://localhost:8000/api/contractors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (res.ok) {
+        const saved = await res.json();
+        console.log("Contractor saved:", saved);
+        alert("Contractor added successfully!");
+
+        // reset form
+        setFormData({
+          activity: "",
+          name: "",
+          pan: "",
+          contact: "",
+          bank: "",
+          accountNo: "",
+          ifsc: "",
+        });
+      } else {
+        const err = await res.json();
+        console.error("Failed to save contractor:", err);
+        alert("Error: " + (err.error || "Failed to save contractor"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong!");
+    }
   };
 
   return (
@@ -34,7 +83,10 @@ export default function AddContractor() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
           {/* Activity Dropdown */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -48,9 +100,11 @@ export default function AddContractor() {
               required
             >
               <option value="">Select Activity</option>
-              <option value="activity1">Activity 1</option>
-              <option value="activity2">Activity 2</option>
-              <option value="activity3">Activity 3</option>
+              {activities.map((act) => (
+                <option key={act._id} value={act._id}>
+                  {act.title}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -145,7 +199,7 @@ export default function AddContractor() {
             />
           </div>
 
-          {/* Submit Button (full width row) */}
+          {/* Submit Button */}
           <div className="md:col-span-2">
             <button
               type="submit"

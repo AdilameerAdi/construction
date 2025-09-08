@@ -10,7 +10,7 @@ export default function Contractors() {
   useEffect(() => {
     const fetchContractors = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/contractors");
+        const response = await fetch("http://localhost:8000/api/contractors");
         if (!response.ok) throw new Error("Failed to fetch contractors");
 
         const data = await response.json();
@@ -37,7 +37,7 @@ export default function Contractors() {
     if (!window.confirm("Are you sure you want to delete this contractor?")) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/contractors/${id}`, {
+      const response = await fetch(`http://localhost:8000/api/contractors/${id}`, {
         method: "DELETE",
       });
 
@@ -85,7 +85,9 @@ export default function Contractors() {
               contractors.map((contractor, index) => (
                 <tr key={contractor._id || index} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-2">{index + 1}</td>
-                  <td className="px-4 py-2">{contractor.activity}</td>
+                  <td className="px-4 py-2">
+                    {contractor.activity?.title || "N/A"}
+                  </td>
                   <td className="px-4 py-2">{contractor.name}</td>
                   <td className="px-4 py-2">{contractor.pan}</td>
                   <td className="px-4 py-2">{contractor.contact}</td>

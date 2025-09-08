@@ -11,34 +11,41 @@ export default function Vendors() {
     navigate("/dashboard/add-vendor");
   };
 
-  // Fetch vendors from dummy API
+  // ✅ Fetch vendors from backend API
   useEffect(() => {
-    fetch("https://jsonplaceholder.com/users") // <-- replace with your own API
-      .then((res) => res.json())
-      .then((data) => {
-        // Convert API data into your vendor format
-        const formatted = data.map((user, idx) => ({
-          id: user.id,
-          name: user.name,
-          gst: `GSTIN${1000 + idx}`, // dummy GST
-          contact: user.phone,
-          bank: "Demo Bank",
-          accountNo: `ACC${10000 + user.id}`,
-          ifsc: "DEMO0001234",
-        }));
-        setVendors(formatted);
-      })
-      .catch((err) => console.error("Error fetching vendors:", err));
+    const fetchVendors = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/vendors");
+        if (!res.ok) throw new Error("Failed to fetch vendors");
+        const data = await res.json();
+        setVendors(data);
+      } catch (err) {
+        console.error("Error fetching vendors:", err);
+      }
+    };
+    fetchVendors();
   }, []);
 
+  // ✅ Handle edit (navigate to edit page with vendor id)
   const handleEdit = (id) => {
-    alert(`Edit vendor with ID: ${id}`);
-    // Navigate to edit form or open modal
+    navigate(`/dashboard/edit-vendor/${id}`);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this vendor?")) {
-      setVendors(vendors.filter((vendor) => vendor.id !== id));
+  // ✅ Handle delete
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this vendor?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/vendors/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete vendor");
+
+      // remove vendor from state
+      setVendors((prev) => prev.filter((vendor) => vendor._id !== id));
+    } catch (err) {
+      console.error("Error deleting vendor:", err);
+      alert("Could not delete vendor");
     }
   };
 
@@ -74,12 +81,12 @@ export default function Vendors() {
             {vendors.length === 0 ? (
               <tr>
                 <td colSpan={8} className="text-center py-6 text-gray-400 italic">
-                  Loading vendors...
+                  No vendors found
                 </td>
               </tr>
             ) : (
               vendors.map((vendor, index) => (
-                <tr key={vendor.id} className="hover:bg-gray-50 transition">
+                <tr key={vendor._id || index} className="hover:bg-gray-50 transition">
                   <td className="px-6 py-3">{index + 1}</td>
                   <td className="px-6 py-3">{vendor.name}</td>
                   <td className="px-6 py-3">{vendor.gst}</td>
@@ -89,13 +96,13 @@ export default function Vendors() {
                   <td className="px-6 py-3">{vendor.ifsc}</td>
                   <td className="px-6 py-3 text-center flex gap-3 justify-center">
                     <button
-                      onClick={() => handleEdit(vendor.id)}
+                      onClick={() => handleEdit(vendor._id)}
                       className="text-blue-600 hover:text-blue-800"
                     >
                       <FaEdit />
                     </button>
                     <button
-                      onClick={() => handleDelete(vendor.id)}
+                      onClick={() => handleDelete(vendor._id)}
                       className="text-red-600 hover:text-red-800"
                     >
                       <FaTrash />

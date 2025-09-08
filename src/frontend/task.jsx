@@ -11,7 +11,7 @@ export default function Task() {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/tasks");
+        const res = await fetch("http://localhost:8000/api/tasks");
         if (!res.ok) throw new Error("Failed to fetch tasks");
         const data = await res.json();
         setTasks(data);
@@ -31,12 +31,13 @@ export default function Task() {
     if (!window.confirm("Are you sure you want to delete this task?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${id}`, {
+      const res = await fetch(`http://localhost:8000/api/tasks/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete task");
 
-      setTasks(tasks.filter((task) => task.id !== id));
+      // Update state after delete
+      setTasks(tasks.filter((task) => task._id !== id));
     } catch (err) {
       console.error(err);
     }
@@ -76,9 +77,12 @@ export default function Task() {
               </tr>
             ) : (
               tasks.map((task, index) => (
-                <tr key={task.id} className="hover:bg-gray-50 transition">
+                <tr key={task._id} className="hover:bg-gray-50 transition">
                   <td className="px-4 py-2">{index + 1}</td>
-                  <td className="px-4 py-2">{task.activity}</td>
+                  {/* activity is populated with "title" in backend */}
+                  <td className="px-4 py-2">
+                    {task.activity?.title || "N/A"}
+                  </td>
                   <td className="px-4 py-2">{task.title}</td>
                   <td className="px-4 py-2">
                     <span
@@ -93,13 +97,13 @@ export default function Task() {
                   </td>
                   <td className="px-4 py-2 flex gap-3">
                     <button
-                      onClick={() => navigate(`/dashboard/edittask/${task.id}`)}
+                      onClick={() => navigate(`/dashboard/edittask/${task._id}`)}
                       className="text-blue-600 hover:text-blue-800"
                     >
                       <FaEdit />
                     </button>
                     <button
-                      onClick={() => handleDelete(task.id)}
+                      onClick={() => handleDelete(task._id)}
                       className="text-red-600 hover:text-red-800"
                     >
                       <FaTrash />
@@ -114,3 +118,5 @@ export default function Task() {
     </div>
   );
 }
+
+

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function AddFinance() {
@@ -12,13 +12,47 @@ export default function AddFinance() {
     creditOption: "Customer/other",
     debitOption: "",
     customer: "Select Customer",
-    contractor: "Contractor 1",
-    vendor: "Vendor 1",
+    contractor: "",
+    vendor: "",
     description: "",
     mode: "Cheque",
     paymentRef: "",
     amount: ""
   });
+
+  // API states
+  const [vendors, setVendors] = useState([]);
+  const [contractors, setContractors] = useState([]);
+
+  // Fetch vendors and contractors
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/vendors");
+        if (res.ok) {
+          const data = await res.json();
+          setVendors(data);
+        }
+      } catch (err) {
+        console.error("Error fetching vendors:", err);
+      }
+    };
+
+    const fetchContractors = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/contractors");
+        if (res.ok) {
+          const data = await res.json();
+          setContractors(data);
+        }
+      } catch (err) {
+        console.error("Error fetching contractors:", err);
+      }
+    };
+
+    fetchVendors();
+    fetchContractors();
+  }, []);
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -150,8 +184,10 @@ export default function AddFinance() {
                     onChange={handleChange}
                     className="border border-blue-300 px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
                   >
-                    <option>Contractor 1</option>
-                    <option>Contractor 2</option>
+                    <option value="">Select Contractor</option>
+                    {contractors.map((c, i) => (
+                      <option key={i} value={c.name || c}>{c.name || c}</option>
+                    ))}
                   </select>
                 )}
               </div>
@@ -176,8 +212,10 @@ export default function AddFinance() {
                     onChange={handleChange}
                     className="border border-blue-300 px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
                   >
-                    <option>Vendor 1</option>
-                    <option>Vendor 2</option>
+                    <option value="">Select Vendor</option>
+                    {vendors.map((v, i) => (
+                      <option key={i} value={v.name || v}>{v.name || v}</option>
+                    ))}
                   </select>
                 )}
               </div>
