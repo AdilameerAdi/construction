@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import GanttChart from "./Gantchart"; // make sure filename matches exactly (case-sensitive)
+import GanttChart from "../components/Gantchart"; // make sure filename matches exactly (case-sensitive)
 
 export default function ProjectOverview() {
   const location = useLocation();

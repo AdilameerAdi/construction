@@ -34,7 +34,7 @@ export default function Activity() {
 
   // Handle edit
   const handleEdit = (id) => {
-    navigate(`/dashboard/edit-activity/${id}`); // make edit page later
+    navigate("/dashboard/add-activity", { state: { editId: id } });
   };
 
   // Handle toggle status
@@ -42,7 +42,7 @@ export default function Activity() {
     const newStatus = currentStatus === "Active" ? "Deactive" : "Active";
 
     try {
-      const response = await fetch(`http://localhost:5000/api/activities/${id}`, {
+      const response = await fetch(`http://localhost:8000/api/activities/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -67,7 +67,7 @@ export default function Activity() {
     if (!window.confirm("Are you sure you want to delete this activity?")) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/activities/${id}`, {
+      const response = await fetch(`http://localhost:8000/api/activities/${id}`, {
         method: "DELETE",
       });
 

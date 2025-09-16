@@ -6,6 +6,7 @@ export default function AddStock() {
   const navigate = useNavigate();
   const location = useLocation();
   const projectId = location.state?.projectId;
+  const editId = location.state?.editId;
 
   // Fetched lists
   const [materials, setMaterials] = useState([]);
@@ -70,6 +71,33 @@ export default function AddStock() {
     return () => ac.abort();
   }, []);
 
+  // Prefill when editing
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      try {
+        const r = await fetch(`http://localhost:8000/api/stocks/${editId}`);
+        if (!r.ok) throw new Error("Failed to fetch stock");
+        const data = await r.json();
+        const src = Array.isArray(data) ? data[0] : (data?.data || data);
+        if (src) {
+          setNewStock({
+            date: src.date ? src.date.substring(0,10) : "",
+            project: src.project || "",
+            material: src.material?._id || src.material || "",
+            type: src.type || "",
+            vendor: src.vendor?._id || src.contractor?._id || "",
+            quantity: String(src.quantity ?? ""),
+            stock: String(src.stock ?? ""),
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Failed to load stock entry for editing");
+      }
+    })();
+  }, [editId]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNewStock((prev) => ({ ...prev, [name]: value }));
@@ -90,8 +118,12 @@ export default function AddStock() {
     };
 
     try {
-      const res = await fetch("http://localhost:8000/api/stocks", {
-        method: "POST",
+      const url = editId
+        ? `http://localhost:8000/api/stocks/${editId}`
+        : "http://localhost:8000/api/stocks";
+      const method = editId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -101,7 +133,7 @@ export default function AddStock() {
         throw new Error(err?.error || "Failed to save stock");
       }
 
-      alert("Stock added successfully!");
+      alert(editId ? "Stock updated successfully!" : "Stock added successfully!");
       setNewStock({
         date: "",
         project: "",
@@ -125,7 +157,7 @@ export default function AddStock() {
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
         <div className="mb-6 sm:mb-8 text-center">
           <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-            Add / Edit Stock Transaction
+            {editId ? "Edit Stock Transaction" : "Add Stock Transaction"}
           </h2>
         </div>
 
@@ -260,7 +292,7 @@ export default function AddStock() {
               type="submit"
               className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700 transition"
             >
-              Add Stock
+              {editId ? "Save Changes" : "Add Stock"}
             </button>
           </div>
         </form>

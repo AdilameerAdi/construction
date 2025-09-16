@@ -82,7 +82,7 @@ export default function Task() {
               </div>
               <div className="flex gap-3 justify-end">
                 <button
-                  onClick={() => navigate(`/dashboard/edittask/${task._id}`)}
+                  onClick={() => navigate("/dashboard/addtask", { state: { editId: task._id } })}
                   className="text-blue-600 hover:text-blue-800 p-2"
                 >
                   <FaEdit />
@@ -140,7 +140,7 @@ export default function Task() {
                     </td>
                     <td className="px-3 lg:px-4 py-2 flex gap-3">
                       <button
-                        onClick={() => navigate(`/dashboard/edittask/${task._id}`)}
+                        onClick={() => navigate("/dashboard/addtask", { state: { editId: task._id } })}
                         className="text-blue-600 hover:text-blue-800 p-1"
                       >
                         <FaEdit />

@@ -220,6 +220,10 @@ export default function StockManagement() {
     }
   };
 
+  const handleEdit = (row) => {
+    navigate("/dashboard/add-stock", { state: { editId: row._id, projectName } });
+  };
+
   return (
     <div className="flex-1 p-4 sm:p-6 lg:p-8 min-h-screen bg-gray-100 relative">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-6">
@@ -392,7 +396,7 @@ export default function StockManagement() {
                   <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold">{entry.stock}</td>
                   <td className="px-3 xl:px-4 py-3 border">
                     <div className="flex justify-center gap-2">
-                      <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded text-xs transition">Edit</button>
+                      <button onClick={() => handleEdit(entry)} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded text-xs transition">Edit</button>
                       <button
                         onClick={() => handleDelete(entry)}
                         className="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded text-xs transition"
@@ -454,7 +458,7 @@ export default function StockManagement() {
                   </td>
                   <td className="px-2 py-3 border">
                     <div className="flex justify-center gap-1">
-                      <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-1 py-1 rounded text-xs transition">Edit</button>
+                      <button onClick={() => handleEdit(entry)} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-1 py-1 rounded text-xs transition">Edit</button>
                       <button
                         onClick={() => handleDelete(entry)}
                         className="text-red-600 hover:text-red-800 hover:bg-red-50 px-1 py-1 rounded text-xs transition"
@@ -499,9 +503,7 @@ export default function StockManagement() {
                   </div>
                 </div>
                 <div className="flex gap-2 ml-4">
-                  <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition">
-                    Edit
-                  </button>
+                  <button onClick={() => handleEdit(entry)} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition">Edit</button>
                   <button
                     onClick={() => handleDelete(entry)}
                     className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition"

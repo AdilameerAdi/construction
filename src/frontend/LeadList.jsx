@@ -67,6 +67,11 @@ export default function LeadList() {
     }
   };
 
+  // Navigate to edit lead form
+  const handleEdit = (id) => {
+    navigate("/dashboard/add-lead", { state: { projectId, editId: id } });
+  };
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilter((prev) => ({ ...prev, [name]: value }));
@@ -86,6 +91,22 @@ export default function LeadList() {
       (!filter.leadType || lead.leadType === filter.leadType)
     );
   });
+
+  // Toggle lead conversion flag (example Active/Deactive-style action)
+  const toggleConverted = async (id, current) => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/leads/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isConverted: !current }),
+      });
+      if (!res.ok) throw new Error("Failed to update lead");
+      setLeads((prev) => prev.map((l) => (l._id === id ? { ...l, isConverted: !current } : l)));
+    } catch (e) {
+      console.error(e);
+      alert("Failed to toggle converted status");
+    }
+  };
 
   if (loading) {
     return <p className="text-center mt-6 text-gray-600 p-4 sm:p-6">Loading leads...</p>;
@@ -204,15 +225,23 @@ export default function LeadList() {
                   </span>
                 </td>
                 <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    lead.isConverted ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {lead.isConverted ? "Yes" : "No"}
-                  </span>
+                  <button
+                    onClick={() => toggleConverted(lead._id, !!lead.isConverted)}
+                    className={`px-2 py-1 rounded text-xs font-medium ${
+                      lead.isConverted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {lead.isConverted ? "Converted" : "Mark Converted"}
+                  </button>
                 </td>
                 <td className="px-3 xl:px-4 py-3 border">
                   <div className="flex justify-center gap-2">
-                    <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded text-xs transition">Edit</button>
+                    <button
+                      onClick={() => handleEdit(lead._id)}
+                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded text-xs transition"
+                    >
+                      Edit
+                    </button>
                     <button
                       className="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded text-xs transition"
                       onClick={() => handleDelete(lead._id)}
@@ -269,7 +298,12 @@ export default function LeadList() {
                 <td className="px-2 py-3 border text-xs">{lead.nextVisit}</td>
                 <td className="px-2 py-3 border">
                   <div className="flex justify-center gap-1">
-                    <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-1 py-1 rounded text-xs transition">Edit</button>
+                    <button
+                      onClick={() => handleEdit(lead._id)}
+                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-1 py-1 rounded text-xs transition"
+                    >
+                      Edit
+                    </button>
                     <button
                       className="text-red-600 hover:text-red-800 hover:bg-red-50 px-1 py-1 rounded text-xs transition"
                       onClick={() => handleDelete(lead._id)}
@@ -322,7 +356,10 @@ export default function LeadList() {
                   </div>
                 </div>
                 <div className="flex gap-2 ml-4">
-                  <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition">
+                  <button
+                    onClick={() => handleEdit(lead._id)}
+                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition"
+                  >
                     Edit
                   </button>
                   <button

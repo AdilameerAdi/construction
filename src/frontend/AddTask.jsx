@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FaTasks, FaListAlt, FaClipboardList } from "react-icons/fa";
 
 export default function AddTask() {
@@ -8,6 +8,8 @@ export default function AddTask() {
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const editId = location.state?.editId;
 
   // ✅ Fetch activities from API
   useEffect(() => {
@@ -23,13 +25,35 @@ export default function AddTask() {
     fetchActivities();
   }, []);
 
+  // Prefill on edit
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/tasks/${editId}`);
+        if (!res.ok) throw new Error("Failed to load task");
+        const data = await res.json();
+        setActivity(data.activity?._id || data.activity || "");
+        setTitle(data.title || "");
+        setStatus(data.status || "");
+      } catch (e) {
+        console.error(e);
+        alert("Failed to load task for editing");
+      }
+    })();
+  }, [editId]);
+
   // ✅ Save Task API
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8000/api/tasks", {
-        method: "POST",
+      const url = editId
+        ? `http://localhost:8000/api/tasks/${editId}`
+        : "http://localhost:8000/api/tasks";
+      const method = editId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -136,7 +160,7 @@ export default function AddTask() {
               type="submit"
               className="w-full sm:flex-1 px-4 py-2 sm:py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition text-sm sm:text-base"
             >
-              Save Task
+              {editId ? "Save Changes" : "Save Task"}
             </button>
           </div>
         </form>

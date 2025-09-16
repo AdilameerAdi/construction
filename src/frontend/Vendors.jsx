@@ -28,7 +28,7 @@ export default function Vendors() {
 
   // ✅ Handle edit (navigate to edit page with vendor id)
   const handleEdit = (id) => {
-    navigate(`/dashboard/edit-vendor/${id}`);
+    navigate("/dashboard/add-vendor", { state: { editId: id } });
   };
 
   // ✅ Handle delete

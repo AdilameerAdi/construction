@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -6,6 +6,7 @@ export default function AddCustomer() {
   const location = useLocation();
   const navigate = useNavigate();
   const projectId = location.state?.projectId;
+  const editId = location.state?.editId;
   const [formData, setFormData] = useState({
     datetime: "",
     fullName: "",
@@ -19,6 +20,33 @@ export default function AddCustomer() {
 
   const [message, setMessage] = useState("");
 
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      try {
+        const r = await fetch(`http://localhost:8000/api/customers/${editId}`);
+        if (!r.ok) throw new Error("Failed to load customer");
+        const data = await r.json();
+        const src = data?.data || data;
+        if (src) {
+          setFormData({
+            datetime: src.datetime ? new Date(src.datetime).toISOString().slice(0,16) : "",
+            fullName: src.fullName || "",
+            primaryContact: src.primaryContact || "",
+            secondaryContact: src.secondaryContact || "",
+            aadharNo: src.aadharNo || "",
+            address: src.address || "",
+            unitNo: src.unitNo || "",
+            amount: src.amount || "",
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        setMessage("❌ Failed to load customer for editing");
+      }
+    })();
+  }, [editId]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -29,8 +57,12 @@ export default function AddCustomer() {
 
     try {
       const customerData = { ...formData, project: projectId };
-      const res = await axios.post("http://localhost:8000/api/customers", customerData);
-      setMessage("✅ Customer saved successfully!");
+      const url = editId
+        ? `http://localhost:8000/api/customers/${editId}`
+        : "http://localhost:8000/api/customers";
+      const method = editId ? "put" : "post";
+      const res = await axios[method](url, customerData);
+      setMessage(editId ? "✅ Customer updated successfully!" : "✅ Customer saved successfully!");
       console.log("Server Response:", res.data);
       setFormData({
         datetime: "",
@@ -42,7 +74,7 @@ export default function AddCustomer() {
         unitNo: "",
         amount: "",
       }); // reset form
-      setTimeout(() => navigate("/dashboard/customers", { state: { projectId } }), 1500);
+      setTimeout(() => navigate("/dashboard/customers", { state: { projectId } }), 800);
     } catch (error) {
       setMessage("❌ Failed to save customer: " + error.response?.data?.error || error.message);
       console.error(error);
@@ -54,7 +86,7 @@ export default function AddCustomer() {
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
         <div className="mb-6 sm:mb-8 text-center">
           <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-            Add New Customer
+            {editId ? "Edit Customer" : "Add New Customer"}
           </h2>
         </div>
 
@@ -172,7 +204,7 @@ export default function AddCustomer() {
               type="submit"
               className="w-full py-2 sm:py-3 text-sm sm:text-base rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-600 transition duration-200"
             >
-              Save Customer
+              {editId ? "Save Changes" : "Save Customer"}
             </button>
           </div>
         </form>

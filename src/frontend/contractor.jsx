@@ -29,7 +29,7 @@ export default function Contractors() {
 
   // Handle edit
   const handleEdit = (id) => {
-    navigate(`/dashboard/edit-contractor/${id}`);
+    navigate("/dashboard/add-contractor", { state: { editId: id } });
   };
 
   // Handle delete

@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function AddFinance() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const editId = location.state?.editId;
 
   const [entry, setEntry] = useState({
     date: "",
@@ -46,6 +48,39 @@ export default function AddFinance() {
     fetchData("http://localhost:8000/api/projects", setProjects);
   }, []);
 
+  // Prefill on edit
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/finances/${editId}`);
+        if (!res.ok) throw new Error("Failed to load finance entry");
+        const data = await res.json();
+        const src = data?.data || data;
+        if (src) {
+          setEntry({
+            date: src.date ? src.date.substring(0,10) : "",
+            project: src.project?._id || src.project || "General",
+            type: src.type || "Credit",
+            creditHead: src.creditHead || "Other",
+            creditOption: src.creditOption || (src.type === "Credit" ? "Other" : "Other"),
+            debitOption: src.debitOption || "",
+            customer: src.customer?._id || "",
+            contractor: src.contractor?._id || "",
+            vendor: src.vendor?._id || "",
+            description: src.description || "",
+            mode: src.mode || "Cheque",
+            paymentRef: src.paymentRef || src.chequeNo || "",
+            amount: src.amount ?? "",
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Failed to load finance entry for editing");
+      }
+    })();
+  }, [editId]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEntry((prev) => ({ ...prev, [name]: value }));
@@ -61,8 +96,12 @@ export default function AddFinance() {
     }
 
     try {
-      const res = await fetch("http://localhost:8000/api/finances", {
-        method: "POST",
+      const url = editId
+        ? `http://localhost:8000/api/finances/${editId}`
+        : "http://localhost:8000/api/finances";
+      const method = editId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -70,8 +109,8 @@ export default function AddFinance() {
       });
 
       if (res.ok) {
-        alert("Finance entry added!");
-        navigate("/dashboard");
+        alert(editId ? "Finance entry updated!" : "Finance entry added!");
+        navigate("/dashboard/project-finance");
       } else {
         const error = await res.json();
         alert("Error: " + (error.message || "Could not add entry"));
@@ -100,7 +139,7 @@ export default function AddFinance() {
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
         <div className="mb-6 sm:mb-8 text-center">
           <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-            Add / Edit Transaction
+            {editId ? "Edit Transaction" : "Add Transaction"}
           </h2>
         </div>
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function AddContractor() {
   const [formData, setFormData] = useState({
@@ -12,6 +13,9 @@ export default function AddContractor() {
   });
 
   const [activities, setActivities] = useState([]);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const editId = location.state?.editId;
 
   // 🔹 Fetch Activities for Dropdown
   useEffect(() => {
@@ -28,6 +32,33 @@ export default function AddContractor() {
     fetchActivities();
   }, []);
 
+  // Prefill for edit
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      try {
+        const r = await fetch(`http://localhost:8000/api/contractors/${editId}`);
+        if (!r.ok) throw new Error("Failed to load contractor");
+        const data = await r.json();
+        const src = data?.data || data;
+        if (src) {
+          setFormData({
+            activity: src.activity?._id || src.activity || "",
+            name: src.name || "",
+            pan: src.pan || "",
+            contact: src.contact || "",
+            bank: src.bank || "",
+            accountNo: src.accountNo || "",
+            ifsc: src.ifsc || "",
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Failed to load contractor for editing");
+      }
+    })();
+  }, [editId]);
+
   // 🔹 Handle Input Change
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -37,8 +68,12 @@ export default function AddContractor() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:8000/api/contractors", {
-        method: "POST",
+      const url = editId
+        ? `http://localhost:8000/api/contractors/${editId}`
+        : "http://localhost:8000/api/contractors";
+      const method = editId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
@@ -46,7 +81,7 @@ export default function AddContractor() {
       if (res.ok) {
         const saved = await res.json();
         console.log("Contractor saved:", saved);
-        alert("Contractor added successfully!");
+        alert(editId ? "Contractor updated successfully!" : "Contractor added successfully!");
 
         // reset form
         setFormData({
@@ -58,6 +93,7 @@ export default function AddContractor() {
           accountNo: "",
           ifsc: "",
         });
+        navigate("/dashboard/contractors");
       } else {
         const err = await res.json();
         console.error("Failed to save contractor:", err);
@@ -75,7 +111,7 @@ export default function AddContractor() {
         {/* Header */}
         <div className="mb-6 sm:mb-8 text-center">
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">
-            Contractor Details
+            {editId ? "Edit Contractor" : "Contractor Details"}
           </h2>
           <p className="text-gray-500 mt-1 text-sm sm:text-base">
             Fill out the form below to add a new contractor
@@ -205,7 +241,7 @@ export default function AddContractor() {
               type="submit"
               className="w-full bg-[#2044E4] text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg font-medium shadow-md hover:bg-blue-700 transition-colors"
             >
-              Submit
+              {editId ? "Save Changes" : "Submit"}
             </button>
           </div>
         </form>

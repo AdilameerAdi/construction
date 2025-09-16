@@ -1,5 +1,6 @@
 // src/frontend/AddVendor.js
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function AddVendor() {
   const [formData, setFormData] = useState({
@@ -10,6 +11,9 @@ export default function AddVendor() {
     accountNo: "",
     ifsc: "",
   });
+  const location = useLocation();
+  const navigate = useNavigate();
+  const editId = location.state?.editId;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -19,8 +23,12 @@ export default function AddVendor() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8000/api/vendors", {
-        method: "POST",
+      const url = editId
+        ? `http://localhost:8000/api/vendors/${editId}`
+        : "http://localhost:8000/api/vendors";
+      const method = editId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
@@ -28,7 +36,7 @@ export default function AddVendor() {
       if (res.ok) {
         const saved = await res.json();
         console.log("Vendor saved:", saved);
-        alert("Vendor submitted successfully!");
+        alert(editId ? "Vendor updated successfully!" : "Vendor submitted successfully!");
 
         // reset form
         setFormData({
@@ -39,6 +47,7 @@ export default function AddVendor() {
           accountNo: "",
           ifsc: "",
         });
+        navigate("/dashboard/vendors");
       } else {
         const err = await res.json();
         console.error("Failed to save vendor:", err);
@@ -50,11 +59,36 @@ export default function AddVendor() {
     }
   };
 
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      try {
+        const r = await fetch(`http://localhost:8000/api/vendors/${editId}`);
+        if (!r.ok) throw new Error("Failed to load vendor");
+        const data = await r.json();
+        const src = data?.data || data;
+        if (src) {
+          setFormData({
+            name: src.name || "",
+            gst: src.gst || "",
+            contact: src.contact || "",
+            bank: src.bank || "",
+            accountNo: src.accountNo || "",
+            ifsc: src.ifsc || "",
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Failed to load vendor for editing");
+      }
+    })();
+  }, [editId]);
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-start justify-center py-6 sm:py-12 px-4">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
         <div className="mb-6 sm:mb-8 text-center">
-          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">Add Vendor</h2>
+          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">{editId ? "Edit Vendor" : "Add Vendor"}</h2>
         </div>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -137,7 +171,7 @@ export default function AddVendor() {
               type="submit"
               className="w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 text-white rounded-lg font-semibold shadow-md hover:bg-blue-700 transition duration-200"
             >
-              Submit
+              {editId ? "Save Changes" : "Submit"}
             </button>
           </div>
         </form>

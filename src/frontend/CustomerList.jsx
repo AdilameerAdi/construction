@@ -39,6 +39,21 @@ export default function CustomerList() {
     }
   };
 
+  // Toggle Active/Inactive if supported by backend
+  const handleToggleStatus = async (id, current) => {
+    try {
+      const res = await axios.put(`http://localhost:8000/api/customers/${id}`, {
+        status: current === "Active" ? "Inactive" : "Active",
+      });
+      if (res && res.status >= 200 && res.status < 300) {
+        setCustomers((prev) => prev.map((c) => (c._id === id ? { ...c, status: current === "Active" ? "Inactive" : "Active" } : c)));
+      }
+    } catch (e) {
+      console.error("Failed to toggle customer status", e);
+      alert("Could not update status");
+    }
+  };
+
   if (loading) {
     return <p className="text-center mt-6 text-gray-600 p-4 sm:p-6">Loading customers...</p>;
   }
@@ -85,12 +100,28 @@ export default function CustomerList() {
                 <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm">{c.unitNo}</td>
                 <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold">₹{c.amount}</td>
                 <td className="px-3 xl:px-4 py-3 border">
-                  <button
-                    className="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded text-xs xl:text-sm transition"
-                    onClick={() => handleDelete(c._id)}
-                  >
-                    Delete
-                  </button>
+                  <div className="flex justify-center gap-2">
+                    <button
+                      onClick={() => navigate("/dashboard/add-customer", { state: { projectId, editId: c._id } })}
+                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded text-xs xl:text-sm transition"
+                    >
+                      Edit
+                    </button>
+                    {c.status && (
+                      <button
+                        onClick={() => handleToggleStatus(c._id, c.status)}
+                        className="text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 px-2 py-1 rounded text-xs xl:text-sm transition"
+                      >
+                        {c.status === 'Active' ? 'Deactivate' : 'Activate'}
+                      </button>
+                    )}
+                    <button
+                      className="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded text-xs xl:text-sm transition"
+                      onClick={() => handleDelete(c._id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

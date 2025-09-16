@@ -12,6 +12,7 @@ export default function AddMaterial() {
   const location = useLocation();
   const [activities, setActivities] = useState([]);
   const [units, setUnits] = useState([]);
+  const editId = location.state?.editId;
 
   // Fetch activities and units from database
   useEffect(() => {
@@ -31,6 +32,30 @@ export default function AddMaterial() {
     fetchData();
   }, []);
 
+  // Prefill for edit
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      try {
+        const r = await fetch(`http://localhost:8000/api/materials/${editId}`);
+        if (!r.ok) throw new Error("Failed to load material");
+        const data = await r.json();
+        const src = data?.data || data;
+        if (src) {
+          setFormData({
+            activity: src.activity?._id || src.activity || "",
+            name: src.name || "",
+            unit: src.unit?._id || src.unit || "",
+            status: src.status || "Active",
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Failed to load material for editing");
+      }
+    })();
+  }, [editId]);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -39,14 +64,18 @@ export default function AddMaterial() {
     e.preventDefault();
     
     try {
-      const res = await fetch("http://localhost:8000/api/materials", {
-        method: "POST",
+      const url = editId
+        ? `http://localhost:8000/api/materials/${editId}`
+        : "http://localhost:8000/api/materials";
+      const method = editId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
       });
       
       if (res.ok) {
-        alert("Material added successfully!");
+        alert(editId ? "Material updated successfully!" : "Material added successfully!");
         
         // Reset form
         setFormData({ activity: "", name: "", unit: "", status: "Active" });
@@ -68,7 +97,7 @@ export default function AddMaterial() {
         {/* Header */}
         <div className="mb-6 sm:mb-8 text-center">
           <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">
-            Add Material
+            {editId ? "Edit Material" : "Add Material"}
           </h2>
           <p className="text-gray-500 mt-1 text-sm">
             Fill out the form below to add a new material
@@ -170,7 +199,7 @@ export default function AddMaterial() {
               className="w-full bg-[#2044E4] text-white py-2 sm:py-3 rounded-lg
                          font-medium shadow-md hover:bg-blue-700 transition text-sm sm:text-base"
             >
-              Submit
+              {editId ? "Save Changes" : "Submit"}
             </button>
           </div>
         </form>

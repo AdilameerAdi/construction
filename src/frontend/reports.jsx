@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import GanttChart from "./Gantchart"; // ✅ import your existing chart component
+import GanttChart from "../components/Gantchart"; // ✅ import your existing chart component
 
 export default function Reports() {
   const [projects, setProjects] = useState([]);

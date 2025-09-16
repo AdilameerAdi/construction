@@ -2,59 +2,74 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // Auth
-import Login from "./frontend/login";
+import { 
+  Login,
+  Dashboard,
+  Activity,
+  Task,
+  Contractors,
+  Vendors,
+  Material,
+  Unit,
+  Profile,
+  Admin,
+  AdminForm,
+  CustomerList,
+  LeadList,
+  AddLead,
+  NewProject,
+  ProjectFinance,
+  AddFinance,
+  StockManagement,
+  AddStock,
+  LegalFiles,
+  TechnicalFiles,
+  AddTask,
+  AddActivity,
+  AddContractor,
+  AddVendor,
+  AddUnit,
+  AddMaterial,
+  Project2file,
+  ProjectProgress,
+  GanttChart,
+  ProjectOverview,
+  AddCustomer,
+  Reports
+} from "./pages";
 
 // Layout
-import DashboardLayout from "./frontend/DashboardLayout";
+import DashboardLayout from "./layouts/DashboardLayout";
 
 // Dashboard Pages
-import Dashboard from "./frontend/Dashboard";
-import Activity from "./frontend/activity";
-import Task from "./frontend/task";
-import Contractors from "./frontend/contractor";
-import Vendors from "./frontend/Vendors";
-import Material from "./frontend/Material";
-import Unit from "./frontend/Unit";
-import Profile from "./frontend/profile";
-import Admin from "./frontend/admin";
-import AdminForm from "./frontend/AdminForm";
+ 
 // Customer & Leads
-import CustomerList from "./frontend/CustomerList";
+ 
 
-import LeadList from "./frontend/LeadList";
-import AddLead from "./frontend/AddLead";
+ 
 
 // Finance & Project
-import NewProject from "./frontend/NewProjectModal"; // ensure this is a page
-import ProjectFinance from "./frontend/ProjectFinance";
-import AddFinance from "./frontend/AddFinance";
+ 
 
 // Stock
-import StockManagement from "./frontend/StockManagement";
-import AddStock from "./frontend/AddStock";
+ 
 
 // Files
-import LegalFiles from "./frontend/LegalFiles";
-import TechnicalFiles from "./frontend/TechnicalFiles";
+ 
 //
-import AddTask from "./frontend/AddTask";
-import AddActivity from "./frontend/addactivity";
+ 
 //
-import AddContractor from "./frontend/addcontractor";
+ 
 //
-import AddVendor from "./frontend/AddVendor";
+ 
 //
-import AddUnit from "./frontend/AddUnit";
+ 
 //
-import AddMaterial from "./frontend/AddMaterial";
+ 
 //
-import Project2file from "./frontend/projectfile2";
+ 
 //
-import ProjectProgress from "./frontend/ProjectProgress";
-import GanttChart from "./frontend/Gantchart";
-import ProjectOverview from "./frontend/Projectoverview";
-import AddCustomer from "./frontend/addcustomer";
-import Reports from "./frontend/reports";
+ 
 function App() {
   return (
     <Router>

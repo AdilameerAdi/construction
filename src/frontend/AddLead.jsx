@@ -5,6 +5,7 @@ export default function AddLead() {
   const navigate = useNavigate();
   const location = useLocation();
   const projectId = location.state?.projectId;
+  const editId = location.state?.editId;
   const [lead, setLead] = useState({
     fullName: "",
     contactNo: "",
@@ -40,6 +41,37 @@ export default function AddLead() {
     fetchConvertedLeads();
   }, []);
 
+  // Prefill when editing
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/leads/${editId}`);
+        if (!res.ok) throw new Error("Failed to load lead");
+        const data = await res.json();
+        const src = data?.data || data; // handle {data} or raw
+        if (src) {
+          setLead({
+            fullName: src.fullName || "",
+            contactNo: src.contactNo || "",
+            nextVisit: src.nextVisit ? src.nextVisit.substring(0,10) : "",
+            visitDate: src.visitDate ? src.visitDate.substring(0,10) : "",
+            note: src.note || "",
+            leadType: src.leadType || "",
+            isConverted: Boolean(src.isConverted),
+            aadharNo: src.aadharNo || "",
+            address: src.address || "",
+            unitNo: src.unitNo || "",
+            amount: src.amount || "",
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Failed to load lead for editing");
+      }
+    })();
+  }, [editId]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setLead((prev) => ({
@@ -53,8 +85,12 @@ export default function AddLead() {
 
     try {
       const leadData = { ...lead, project: projectId };
-      const response = await fetch("http://localhost:8000/api/leads", {
-        method: "POST",
+      const url = editId
+        ? `http://localhost:8000/api/leads/${editId}`
+        : "http://localhost:8000/api/leads";
+      const method = editId ? "PUT" : "POST";
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(leadData),
       });
@@ -67,7 +103,9 @@ export default function AddLead() {
       }
 
       alert(
-        lead.isConverted
+        editId
+          ? `✅ Lead updated successfully!`
+          : lead.isConverted
           ? `✅ Lead "${lead.fullName}" converted to Customer successfully!`
           : `✅ Lead "${lead.fullName}" added successfully!`
       );
@@ -87,6 +125,8 @@ export default function AddLead() {
       });
 
       if (lead.isConverted) fetchConvertedLeads();
+      // After save, go back to list
+      navigate("/dashboard/leads", { state: { projectId } });
     } catch (err) {
       console.error("Error adding lead:", err);
       alert("❌ Failed to connect to server. Please try again.");
@@ -99,7 +139,7 @@ export default function AddLead() {
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8 mb-8 sm:mb-12">
         <div className="mb-6 sm:mb-8 text-center">
           <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-            Add New Lead
+            {editId ? "Edit Lead" : "Add New Lead"}
           </h2>
           <p className="text-gray-500 mt-1 text-sm sm:text-base">
             Fill out the form below to add a new lead

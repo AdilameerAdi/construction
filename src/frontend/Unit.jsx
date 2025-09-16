@@ -37,7 +37,7 @@ export default function Unit() {
 
   // ✅ Edit Unit (navigate to edit page)
   const handleEdit = (id) => {
-    navigate(`/dashboard/edit-unit/${id}`);
+    navigate("/dashboard/add-unit", { state: { editId: id } });
   };
 
   // ✅ Delete Unit

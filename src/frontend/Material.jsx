@@ -44,7 +44,7 @@ export default function Material() {
   };
 
   const handleEdit = (id) => {
-    navigate(`/dashboard/edit-material/${id}`);
+    navigate("/dashboard/add-material", { state: { editId: id } });
   };
 
   return (

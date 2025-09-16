@@ -1,18 +1,24 @@
 // src/frontend/AddUnit.jsx
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function AddUnit() {
   const [unitName, setUnitName] = useState("");
   const [status, setStatus] = useState("Active"); // default value
   const navigate = useNavigate();
+  const location = useLocation();
+  const editId = location.state?.editId;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8000/api/units", {
-        method: "POST",
+      const url = editId
+        ? `http://localhost:8000/api/units/${editId}`
+        : "http://localhost:8000/api/units";
+      const method = editId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: unitName, status }),
       });
@@ -20,7 +26,7 @@ export default function AddUnit() {
       if (res.ok) {
         const saved = await res.json();
         console.log("Unit saved:", saved);
-        alert("Unit added successfully!");
+        alert(editId ? "Unit updated successfully!" : "Unit added successfully!");
         navigate("/dashboard/unit"); // Go back to Units list page
       } else {
         const err = await res.json();
@@ -33,12 +39,31 @@ export default function AddUnit() {
     }
   };
 
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      try {
+        const r = await fetch(`http://localhost:8000/api/units/${editId}`);
+        if (!r.ok) throw new Error("Failed to load unit");
+        const data = await r.json();
+        const src = data?.data || data;
+        if (src) {
+          setUnitName(src.name || "");
+          setStatus(src.status || "Active");
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Failed to load unit for editing");
+      }
+    })();
+  }, [editId]);
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-start justify-center py-6 sm:py-12 px-4">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
         <div className="mb-6 sm:mb-8 text-center">
           <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-            Add Unit
+            {editId ? "Edit Unit" : "Add Unit"}
           </h2>
         </div>
 
@@ -77,7 +102,7 @@ export default function AddUnit() {
               type="submit"
               className="w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 text-white rounded-lg font-semibold shadow-md hover:bg-blue-700 transition duration-200"
             >
-              Submit
+              {editId ? "Save Changes" : "Submit"}
             </button>
           </div>
         </form>

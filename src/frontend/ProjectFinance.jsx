@@ -12,6 +12,7 @@ export default function ProjectFinance() {
   const [vendors, setVendors] = useState([]);
   const [contractors, setContractors] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   // Fetch vendors, contractors, customers, and finance entries
   useEffect(() => {
@@ -62,7 +63,7 @@ export default function ProjectFinance() {
         const res = await fetch("http://localhost:8000/api/finances");
         if (res.ok) {
           const data = await res.json();
-          setFinanceEntries(data);
+          setFinanceEntries(Array.isArray(data) ? data : []);
         } else {
           console.error("Failed to fetch finances");
         }
@@ -70,11 +71,23 @@ export default function ProjectFinance() {
         console.error("Error fetching finances:", err);
       }
     };
+    const fetchProjects = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/projects");
+        if (res.ok) {
+          const data = await res.json();
+          setProjects(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+      }
+    };
 
     fetchVendors();
     fetchContractors();
     fetchCustomers();
     fetchFinances();
+    fetchProjects();
   }, []);
 
   // Filter states
@@ -96,8 +109,40 @@ export default function ProjectFinance() {
     setFilter((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Filtered entries
+  const projectIdToName = new Map(projects.filter(p => p && p._id).map(p => [p._id, p.name]));
+  const resolveProjectName = (p) => {
+    if (!p) return "-";
+    if (typeof p === "object") return p.name || projectIdToName.get(p._id) || "-";
+    return projectIdToName.get(p) || p;
+  };
+
+  // Filtered entries - adjust matching for name text inputs
   const filteredEntries = financeEntries.filter((entry) => {
+    // Debug output for filter logic
+    if (filter.type === "Credit" && filter.subType === "Customer") {
+      console.log('Credit/Customer:', {
+        entryCustomer: entry.customer?._id,
+        filterCustomer: filter.customer,
+        entrySubType: entry.subType,
+        matchesCustomer: filter.customer ? (entry.customer && entry.customer._id === filter.customer) : (entry.subType === "Customer")
+      });
+    }
+    if (filter.type === "Debit" && filter.subType === "Material") {
+      console.log('Debit/Material:', {
+        entryVendor: entry.vendor?._id,
+        filterVendor: filter.vendor,
+        entrySubType: entry.subType,
+        matchesVendor: filter.vendor ? (entry.vendor && entry.vendor._id === filter.vendor) : (entry.subType === "Material")
+      });
+    }
+    if (filter.type === "Debit" && filter.subType === "Labour") {
+      console.log('Debit/Labour:', {
+        entryContractor: entry.contractor?._id,
+        filterContractor: filter.contractor,
+        entrySubType: entry.subType,
+        matchesContractor: filter.contractor ? (entry.contractor && entry.contractor._id === filter.contractor) : (entry.subType === "Labour")
+      });
+    }
     const entryDate = new Date(entry.date);
     const from = filter.fromDate ? new Date(filter.fromDate) : null;
     const to = filter.toDate ? new Date(filter.toDate) : null;
@@ -113,54 +158,52 @@ export default function ProjectFinance() {
       (filter.type === "Credit" && entry.subType === filter.subType) ||
       (filter.type === "Debit" && entry.subType === filter.subType);
 
-    // Credit logic
+    // Credit logic: Customer radio selected
     let matchesCustomer = true;
     if (filter.type === "Credit") {
       if (filter.subType === "Customer") {
-        matchesCustomer = entry.customer ? true : false;
         if (filter.customer) {
-          matchesCustomer =
-            entry.customer && entry.customer._id === filter.customer;
+          matchesCustomer = entry.customer && entry.customer._id === filter.customer;
+        } else {
+          matchesCustomer = entry.subType === "Customer";
         }
       } else if (filter.subType === "Other") {
-        matchesCustomer =
-          entry.subType === "Other" || entry.creditOption === "Other";
+        matchesCustomer = entry.subType === "Other" || entry.creditOption === "Other";
+      } else {
+        // If no radio selected, do not filter by customer
+        matchesCustomer = true;
       }
     }
 
-    // Debit logic
+    // Debit logic: Vendor/Contractor radio selected
     let matchesVendor = true;
     let matchesContractor = true;
 
     if (filter.type === "Debit") {
       if (filter.subType === "Material") {
-        matchesVendor = entry.vendor ? true : false;
-        if (filter.vendor) matchesVendor = entry.vendor._id === filter.vendor;
+        if (filter.vendor) {
+          matchesVendor = entry.vendor && entry.vendor._id === filter.vendor;
+        } else {
+          matchesVendor = entry.subType === "Material";
+        }
       } else if (filter.subType === "Labour") {
-        matchesContractor = entry.contractor ? true : false;
-        if (filter.contractor)
-          matchesContractor = entry.contractor._id === filter.contractor;
+        if (filter.contractor) {
+          matchesContractor = entry.contractor && entry.contractor._id === filter.contractor;
+        } else {
+          matchesContractor = entry.subType === "Labour";
+        }
       } else if (["Salary", "Office", "Other"].includes(filter.subType)) {
-        matchesVendor =
-          entry.subType === filter.subType ||
-          entry.debitOption === filter.subType;
-        matchesContractor =
-          entry.subType === filter.subType ||
-          entry.debitOption === filter.subType;
+        matchesVendor = entry.subType === filter.subType || entry.debitOption === filter.subType;
+        matchesContractor = entry.subType === filter.subType || entry.debitOption === filter.subType;
+      } else {
+        // If no radio selected, do not filter by vendor/contractor
+        matchesVendor = true;
+        matchesContractor = true;
       }
     }
 
-    let matchesProject = !filter.project;
-    if (!matchesProject) {
-      // Handle if entry.project is an object with a name property
-      if (entry.project && typeof entry.project === "object" && entry.project.name) {
-        matchesProject = entry.project.name.toLowerCase().includes(filter.project.toLowerCase());
-      } else if (typeof entry.project === "string") {
-        matchesProject = entry.project.toLowerCase().includes(filter.project.toLowerCase());
-      } else {
-        matchesProject = false;
-      }
-    }
+    const projectName = resolveProjectName(entry.project) || "";
+    const matchesProject = !filter.project || projectName.toLowerCase().includes(filter.project.toLowerCase());
 
     let matchesMode =
       !filter.mode ||
@@ -355,10 +398,10 @@ export default function ProjectFinance() {
                       className="w-full border border-gray-300 px-2 sm:px-3 py-2 text-sm rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select Vendor</option>
-                      {vendors.map((v, i) => (
-                        <option key={v._id || i} value={v._id || v}>
-                          {v.name || v}
-                        </option>
+                      {vendors.map((v) => (
+                        v && v._id && v.name ? (
+                          <option key={v._id} value={v._id}>{v.name}</option>
+                        ) : null
                       ))}
                     </select>
                   )}
@@ -371,10 +414,10 @@ export default function ProjectFinance() {
                       className="w-full border border-gray-300 px-2 sm:px-3 py-2 text-sm rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select Contractor</option>
-                      {contractors.map((c, i) => (
-                        <option key={c._id || i} value={c._id || c}>
-                          {c.name || c}
-                        </option>
+                      {contractors.map((c) => (
+                        c && c._id && c.name ? (
+                          <option key={c._id} value={c._id}>{c.name}</option>
+                        ) : null
                       ))}
                     </select>
                   )}
@@ -453,19 +496,19 @@ export default function ProjectFinance() {
           <tbody>
             {filteredEntries.map((entry, idx) => (
               <tr
-                key={entry.id}
+                key={entry._id || idx}
                 className={`transition-colors ${
                   idx % 2 === 0 ? "bg-white" : "bg-gray-50"
                 } hover:bg-blue-50`}
               >
                 <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm text-gray-600">
-                  {entry.id}
+                  {idx + 1}
                 </td>
                 <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm text-gray-600">
                   {entry.date}
                 </td>
                 <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm text-gray-800 font-medium">
-                  {entry.project?.name || "-"}
+                  {resolveProjectName(entry.project)}
                 </td>
                 <td className="px-3 xl:px-4 py-3 border">
                   <span
@@ -501,9 +544,7 @@ export default function ProjectFinance() {
                 </td>
                 <td className="px-3 xl:px-4 py-3 border">
                   <div className="flex gap-2">
-                    <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded text-xs transition">
-                      Edit
-                    </button>
+                    <button onClick={() => navigate("/dashboard/add-finance", { state: { editId: entry._id } })} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded text-xs transition">Edit</button>
                     <button className="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded text-xs transition">
                       Delete
                     </button>
@@ -529,15 +570,15 @@ export default function ProjectFinance() {
           <tbody>
             {filteredEntries.map((entry, idx) => (
               <tr
-                key={entry.id}
+                key={entry._id || idx}
                 className={`transition-colors ${
                   idx % 2 === 0 ? "bg-white" : "bg-gray-50"
                 } hover:bg-blue-50`}
               >
                 <td className="px-2 py-3 border text-xs">
-                  <div className="font-medium">#{entry.id}</div>
+                  <div className="font-medium">#{idx + 1}</div>
                   <div className="text-gray-500">{entry.date}</div>
-                  <div className="text-gray-600 truncate max-w-24">{entry.project?.name || "-"}</div>
+                  <div className="text-gray-600 truncate max-w-24">{resolveProjectName(entry.project)}</div>
                 </td>
                 <td className="px-2 py-3 border text-xs">
                   <span
@@ -559,9 +600,7 @@ export default function ProjectFinance() {
                 </td>
                 <td className="px-2 py-3 border">
                   <div className="flex justify-center gap-1">
-                    <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-1 py-1 rounded text-xs transition">
-                      Edit
-                    </button>
+                    <button onClick={() => navigate("/dashboard/add-finance", { state: { editId: entry._id } })} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-1 py-1 rounded text-xs transition">Edit</button>
                     <button className="text-red-600 hover:text-red-800 hover:bg-red-50 px-1 py-1 rounded text-xs transition">
                       Delete
                     </button>
@@ -581,12 +620,12 @@ export default function ProjectFinance() {
           </div>
         ) : (
           filteredEntries.map((entry, idx) => (
-            <div key={entry.id} className="bg-white rounded-lg shadow-lg p-4">
+            <div key={entry._id || idx} className="bg-white rounded-lg shadow-lg p-4">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
-                      #{entry.id}
+                      #{idx + 1}
                     </span>
                     <span
                       className={`text-xs px-2 py-1 rounded font-medium ${
@@ -603,9 +642,7 @@ export default function ProjectFinance() {
                   </div>
                 </div>
                 <div className="flex gap-2 ml-4">
-                  <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition">
-                    Edit
-                  </button>
+                  <button onClick={() => navigate("/dashboard/add-finance", { state: { editId: entry._id } })} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition">Edit</button>
                   <button className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition">
                     Delete
                   </button>
@@ -619,7 +656,7 @@ export default function ProjectFinance() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Project:</span>
-                  <span className="text-gray-800 font-medium">{entry.project?.name || "-"}</span>
+                  <span className="text-gray-800 font-medium">{resolveProjectName(entry.project)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Mode:</span>

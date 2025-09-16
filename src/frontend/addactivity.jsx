@@ -1,17 +1,42 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function AddActivity() {
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const editId = location.state?.editId;
+
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      try {
+        const r = await fetch(`http://localhost:8000/api/activities/${editId}`);
+        if (!r.ok) throw new Error("Failed to load activity");
+        const data = await r.json();
+        const src = data?.data || data;
+        if (src) {
+          setTitle(src.title || "");
+          setStatus(src.status || "");
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Failed to load activity for editing");
+      }
+    })();
+  }, [editId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:8000/api/activities", {
-        method: "POST",
+      const url = editId
+        ? `http://localhost:8000/api/activities/${editId}`
+        : "http://localhost:8000/api/activities";
+      const method = editId ? "PUT" : "POST";
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -39,10 +64,10 @@ export default function AddActivity() {
         {/* Header */}
         <div className="mb-6 sm:mb-8 text-center">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">
-            Mantri Constructions
+            {editId ? "Edit Activity" : "Mantri Constructions"}
           </h1>
           <p className="text-gray-500 mt-1 text-sm sm:text-base">
-            Add a new activity to your dashboard
+            {editId ? "Update selected activity" : "Add a new activity to your dashboard"}
           </p>
         </div>
 
@@ -95,7 +120,7 @@ export default function AddActivity() {
               type="submit"
               className="w-full sm:flex-1 px-4 py-2 sm:py-3 text-sm sm:text-base bg-[#2044E4] text-white font-medium rounded-lg shadow-md hover:bg-blue-700 transition-colors"
             >
-              Save Activity
+              {editId ? "Save Changes" : "Save Activity"}
             </button>
           </div>
         </form>
