@@ -1,0 +1,15 @@
+project-root/
+│── index.js                 # Entry point
+│── db.js                 # MongoDB connection
+│── models/
+│    └── Activity.js           # Mongoose schema
+│── routes/
+│    └── activityRoutes.js     # All activity routes
+│── controllers/
+│    └── activityController.js # Controller logic
+│── package.json
+
+
+// For database i use zainab mail
+Username : admin
+Password : 1234

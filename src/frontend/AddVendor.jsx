@@ -51,90 +51,97 @@ export default function AddVendor() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Add Vendor</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Name */}
-        <div>
-          <label className="block mb-1 font-medium">Name*</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
+    <div className="min-h-screen bg-gray-50 flex items-start justify-center py-6 sm:py-12 px-4">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
+        <div className="mb-6 sm:mb-8 text-center">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">Add Vendor</h2>
         </div>
 
-        {/* GST No. */}
-        <div>
-          <label className="block mb-1 font-medium">GST No.</label>
-          <input
-            type="text"
-            name="gst"
-            value={formData.gst}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          {/* Name */}
+          <div>
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Name*</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
 
-        {/* Contact Details */}
-        <div>
-          <label className="block mb-1 font-medium">Contact Details</label>
-          <input
-            type="text"
-            name="contact"
-            value={formData.contact}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
+          {/* GST */}
+          <div>
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">GST No.</label>
+            <input
+              type="text"
+              name="gst"
+              value={formData.gst}
+              onChange={handleChange}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
 
-        {/* Bank Details */}
-        <div>
-          <label className="block mb-1 font-medium">Bank Details</label>
-          <input
-            type="text"
-            name="bank"
-            value={formData.bank}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
+          {/* Contact */}
+          <div>
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Contact Details</label>
+            <input
+              type="text"
+              name="contact"
+              value={formData.contact}
+              onChange={handleChange}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
 
-        {/* Account No. */}
-        <div>
-          <label className="block mb-1 font-medium">Account No.</label>
-          <input
-            type="text"
-            name="accountNo"
-            value={formData.accountNo}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
+          {/* Bank */}
+          <div>
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Bank</label>
+            <input
+              type="text"
+              name="bank"
+              value={formData.bank}
+              onChange={handleChange}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
 
-        {/* IFSC Code */}
-        <div>
-          <label className="block mb-1 font-medium">IFSC Code</label>
-          <input
-            type="text"
-            name="ifsc"
-            value={formData.ifsc}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
+          {/* Account No */}
+          <div>
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Account No.</label>
+            <input
+              type="text"
+              name="accountNo"
+              value={formData.accountNo}
+              onChange={handleChange}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-        >
-          Submit
-        </button>
-      </form>
+          {/* IFSC */}
+          <div>
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">IFSC Code</label>
+            <input
+              type="text"
+              name="ifsc"
+              value={formData.ifsc}
+              onChange={handleChange}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          {/* Submit */}
+          <div className="sm:col-span-2">
+            <button
+              type="submit"
+              className="w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 text-white rounded-lg font-semibold shadow-md hover:bg-blue-700 transition duration-200"
+            >
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

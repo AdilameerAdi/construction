@@ -1,47 +1,168 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// src/frontend/StockManagement.jsx
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function StockManagement() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Sample stock entries
-  const [stockEntries, setStockEntries] = useState([
-    {
-      id: 1,
-      date: "03/09/2025",
-      project: "Twin Tower",
-      material: "Cement",
-      type: "Inward",
-      contractor: "Contractor 1",
-      vendor: "",
-      quantity: 50,
-      stock: 150
-    },
-  ]);
+  // ✅ Use projectName instead of projectId
+  const projectName = location.state?.projectName;
 
+  // ===== Saved stocks from backend (shown in table) =====
+  const [stocks, setStocks] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // ===== Filters (unchanged UI) =====
   const [filter, setFilter] = useState({
     fromDate: "",
     toDate: "",
     materials: [],
     type: "",
     contractor: "",
-    vendor: ""
+    vendor: "",
   });
 
-  // Sample list (replace with DB later)
-  const materialsList = Array.from({length: 100}, (_, i) => `Material ${i+1}`);
-  const contractorsList = ["Contractor 1", "Contractor 2", "Contractor 3"];
-  const vendorsList = ["Vendor 1", "Vendor 2", "Vendor 3"];
-
+  // ===== Lists fetched from your APIs =====
+  const [materialsList, setMaterialsList] = useState([]);       // string[]
+  const [contractorsList, setContractorsList] = useState([]);   // string[]
+  const [vendorsList, setVendorsList] = useState([]);           // string[]
+  // Lookup maps for resolving ids -> names
+  const [materialsMap, setMaterialsMap] = useState({});         // { [id]: title }
+  const [vendorsMap, setVendorsMap] = useState({});
+  const [contractorsMap, setContractorsMap] = useState({});
   const [materialPopupOpen, setMaterialPopupOpen] = useState(false);
+
+  // ------- Helpers -------
+  const api = (p) => `http://localhost:8000${p}`;
+  const pickTitle = (x) => (x?.title || x?.name || x?.label || x?.fullName || "");
+
+  const fmtDate = (dstr) => {
+    try {
+      const d = new Date(dstr);
+      if (Number.isNaN(d.getTime())) return dstr || "-";
+      return d.toLocaleDateString("en-GB"); // dd/mm/yyyy
+    } catch {
+      return dstr || "-";
+    }
+  };
+
+  const resolveRef = (value, map) => {
+    if (!value) return "";
+    if (typeof value === "object") {
+      const title = pickTitle(value);
+      if (title) return title;
+      if (value._id && map[value._id]) return map[value._id];
+      return "";
+    }
+    if (map[value]) return map[value];
+    return value;
+  };
+
+  // Load dropdown lists once
+  useEffect(() => {
+    const ac = new AbortController();
+    (async () => {
+      try {
+        const [mRes, cRes, vRes] = await Promise.all([
+          fetch(api("/api/materials"), { signal: ac.signal }),
+          fetch(api("/api/contractors"), { signal: ac.signal }),
+          fetch(api("/api/vendors"), { signal: ac.signal }),
+        ]);
+
+        if (mRes.ok) {
+          const m = await mRes.json();
+          const list = (Array.isArray(m) ? m : []);
+          setMaterialsList(list.map((x) => pickTitle(x) || "Untitled"));
+          const map = {};
+          list.forEach((x) => {
+            if (x?._id) map[x._id] = pickTitle(x) || "Untitled";
+          });
+          setMaterialsMap(map);
+        }
+
+        if (cRes.ok) {
+          const c = await cRes.json();
+          const list = (Array.isArray(c) ? c : []);
+          setContractorsList(list.map((x) => pickTitle(x) || "Unnamed Contractor"));
+          const map = {};
+          list.forEach((x) => {
+            if (x?._id) map[x._id] = pickTitle(x) || "Unnamed Contractor";
+          });
+          setContractorsMap(map);
+        }
+
+        if (vRes.ok) {
+          const v = await vRes.json();
+          const list = (Array.isArray(v) ? v : []);
+          setVendorsList(list.map((x) => pickTitle(x) || "Unnamed Vendor"));
+          const map = {};
+          list.forEach((x) => {
+            if (x?._id) map[x._id] = pickTitle(x) || "Unnamed Vendor";
+          });
+          setVendorsMap(map);
+        }
+      } catch (e) {
+        if (e.name !== "AbortError") console.error(e);
+      }
+    })();
+    return () => ac.abort();
+  }, []);
+
+  // Load saved stocks
+  const loadStocks = async () => {
+    setLoading(true);
+    try {
+      // ✅ send projectName to backend, not projectId
+      const url = projectName
+        ? api(`/api/stocks?project=${encodeURIComponent(projectName)}`)
+        : api("/api/stocks");
+
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`Failed to fetch stocks: ${r.status}`);
+      const data = await r.json();
+
+      const flat = (Array.isArray(data) ? data : []).map((doc, idx) => {
+        const materialName = resolveRef(doc.material, materialsMap);
+        const vendorName = resolveRef(doc.vendor, vendorsMap);
+        const contractorName = resolveRef(doc.contractor, contractorsMap);
+
+        return {
+          _id: doc._id,
+          id: idx + 1,
+          date: fmtDate(doc.date),
+          project: doc.project || "-",
+          material: materialName || "-",
+          type: doc.type || "-",
+          vendorName: vendorName || "",
+          contractorName: contractorName || "",
+          quantity: doc.quantity ?? "-",
+          stock: doc.stock ?? "-",
+        };
+      });
+
+      const uniqueFlat = flat.filter(
+        (item, index, self) => self.findIndex(i => i._id === item._id) === index
+      );
+      setStocks(uniqueFlat);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStocks();
+  }, [materialsMap, vendorsMap, contractorsMap]);
 
   const handleFilterChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (name === "materials") {
-      let updatedMaterials = [...filter.materials];
-      if (checked) updatedMaterials.push(value);
-      else updatedMaterials = updatedMaterials.filter((m) => m !== value);
-      setFilter((prev) => ({ ...prev, materials: updatedMaterials }));
+      let updated = [...filter.materials];
+      if (checked) updated.push(value);
+      else updated = updated.filter((m) => m !== value);
+      setFilter((prev) => ({ ...prev, materials: updated }));
     } else {
       setFilter((prev) => ({ ...prev, [name]: value }));
     }
@@ -49,144 +170,424 @@ export default function StockManagement() {
 
   const handleSearch = () => {};
   const handleReset = () => {
-    setFilter({ fromDate: "", toDate: "", materials: [], type: "", contractor: "", vendor: "" });
+    setFilter({
+      fromDate: "",
+      toDate: "",
+      materials: [],
+      type: "",
+      contractor: "",
+      vendor: "",
+    });
   };
 
-  const filteredEntries = stockEntries.filter((entry) => {
-    const entryDate = new Date(entry.date);
+  const filteredEntries = useMemo(() => {
     const from = filter.fromDate ? new Date(filter.fromDate) : null;
     const to = filter.toDate ? new Date(filter.toDate) : null;
-    return (
-      (!from || entryDate >= from) &&
-      (!to || entryDate <= to) &&
-      (filter.materials.length === 0 || filter.materials.includes(entry.material)) &&
-      (!filter.type || entry.type === filter.type) &&
-      (!filter.contractor || entry.contractor === filter.contractor) &&
-      (!filter.vendor || entry.vendor === filter.vendor)
-    );
-  });
+
+    return stocks.filter((entry) => {
+      const entryDate = (() => {
+        const [dd, mm, yy] = (entry.date || "").split("/");
+        const iso = `${yy}-${mm}-${dd}`;
+        return new Date(iso);
+      })();
+
+      const okDate = (!from || entryDate >= from) && (!to || entryDate <= to);
+      const okMaterial =
+        filter.materials.length === 0 ||
+        filter.materials.includes(entry.material);
+      const okType = !filter.type || entry.type === filter.type;
+      const okVendor =
+        !filter.vendor ||
+        (entry.type === "Inward" && entry.vendorName === filter.vendor);
+      const okContractor =
+        !filter.contractor ||
+        (entry.type === "Outward" &&
+          entry.contractorName === filter.contractor);
+
+      return okDate && okMaterial && okType && okVendor && okContractor;
+    });
+  }, [stocks, filter]);
+
+  const handleDelete = async (row) => {
+    if (!window.confirm("Delete this stock entry?")) return;
+    try {
+      const r = await fetch(api(`/api/stocks/${row._id}`), { method: "DELETE" });
+      if (!r.ok) throw new Error(`Failed: ${r.status}`);
+      setStocks((prev) => prev.filter((s) => s._id !== row._id));
+    } catch (e) {
+      console.error(e);
+      alert("Failed to delete");
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 relative">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Stocks</h2>
-
-      <div className="mb-4 text-right">
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 min-h-screen bg-gray-100 relative">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-6">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">Stock Management</h2>
         <button
-          onClick={() => navigate("/dashboard/add-stock")}
-          className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700"
+          onClick={() => navigate("/dashboard/add-stock", { state: { projectName } })}
+          className="w-full sm:w-auto bg-blue-600 text-white rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base hover:bg-blue-700 transition"
         >
-          Add New
+          Add New Stock
         </button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white shadow-lg rounded-2xl p-4 mb-4 flex flex-wrap gap-4 items-center">
-        <label>From</label>
-        <input type="date" name="fromDate" value={filter.fromDate} onChange={handleFilterChange} className="border px-3 py-2 rounded-lg" placeholder="From Date"/>
-       <label>to</label>
-        <input type="date" name="toDate" value={filter.toDate} onChange={handleFilterChange} className="border px-3 py-2 rounded-lg" placeholder="To Date"/>
+      <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6 mb-6">
+        <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-700 border-b pb-2">
+          🔍 Filters
+        </h3>
+        <div className="space-y-4">
+          {/* Basic Filters */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">From Date</label>
+              <input
+                type="date"
+                name="fromDate"
+                value={filter.fromDate}
+                onChange={handleFilterChange}
+                className="w-full border border-gray-300 px-2 sm:px-3 py-2 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">To Date</label>
+              <input
+                type="date"
+                name="toDate"
+                value={filter.toDate}
+                onChange={handleFilterChange}
+                className="w-full border border-gray-300 px-2 sm:px-3 py-2 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Materials</label>
+              <button
+                type="button"
+                onClick={() => setMaterialPopupOpen(true)}
+                className="w-full border border-gray-300 px-2 sm:px-3 py-2 text-sm rounded-lg hover:bg-gray-50 text-left focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                Select Materials ({filter.materials.length})
+              </button>
+            </div>
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Type</label>
+              <select
+                name="type"
+                value={filter.type}
+                onChange={handleFilterChange}
+                className="w-full border border-gray-300 px-2 sm:px-3 py-2 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">All Types</option>
+                <option value="Inward">Inward</option>
+                <option value="Outward">Outward</option>
+              </select>
+            </div>
+          </div>
 
-        {/* Material select button */}
-        <button
-          type="button"
-          onClick={() => setMaterialPopupOpen(true)}
-          className="border px-3 py-2 rounded-lg hover:bg-gray-100"
-        >
-          Select Material ({filter.materials.length})
-        </button>
+          {/* Conditional Filters */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            {filter.type === "Outward" && (
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Contractor</label>
+                <select
+                  name="contractor"
+                  value={filter.contractor}
+                  onChange={handleFilterChange}
+                  className="w-full border border-gray-300 px-2 sm:px-3 py-2 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select Contractor</option>
+                  {contractorsList.map((c, idx) => (
+                    <option key={idx} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
-        {/* Inward/Outward */}
-        <select name="type" value={filter.type} onChange={handleFilterChange} className="border px-3 py-2 rounded-lg">
-          <option value="">Inward/Outward</option>
-          <option value="Inward">Inward</option>
-          <option value="Outward">Outward</option>
-        </select>
+            {filter.type === "Inward" && (
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Vendor</label>
+                <select
+                  name="vendor"
+                  value={filter.vendor}
+                  onChange={handleFilterChange}
+                  className="w-full border border-gray-300 px-2 sm:px-3 py-2 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select Vendor</option>
+                  {vendorsList.map((v, idx) => (
+                    <option key={idx} value={v}>{v}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
 
-        {filter.type ==="Outward"  && (
-          <select name="contractor" value={filter.contractor} onChange={handleFilterChange} className="border px-3 py-2 rounded-lg">
-            <option value="">Select Contractor</option>
-            {contractorsList.map((c, idx) => <option key={idx} value={c}>{c}</option>)}
-          </select>
-        )}
-
-        {filter.type === "Inward" && (
-          <select name="vendor" value={filter.vendor} onChange={handleFilterChange} className="border px-3 py-2 rounded-lg">
-            <option value="">Select Vendor</option>
-            {vendorsList.map((v, idx) => <option key={idx} value={v}>{v}</option>)}
-          </select>
-        )}
-
-        <button onClick={handleSearch} className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700">Search</button>
-        <button onClick={handleReset} className="bg-gray-300 px-3 py-2 rounded-lg hover:bg-gray-400">Reset</button>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
+            <button
+              onClick={handleSearch}
+              className="w-full sm:w-auto bg-blue-600 text-white px-4 sm:px-5 py-2 text-sm rounded-lg hover:bg-blue-700 transition"
+            >
+              🔍 Search
+            </button>
+            <button
+              onClick={handleReset}
+              className="w-full sm:w-auto bg-gray-300 text-gray-700 px-4 sm:px-5 py-2 text-sm rounded-lg hover:bg-gray-400 transition"
+            >
+              🔄 Reset
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto bg-white shadow-lg rounded-2xl">
+      {/* Desktop Table View - Hidden on small screens */}
+      <div className="hidden lg:block overflow-x-auto bg-white shadow-lg rounded-2xl">
         <table className="min-w-full table-auto">
           <thead className="bg-gray-100">
             <tr>
-              <th className="px-4 py-2 border">S.No.</th>
-              <th className="px-4 py-2 border">Date/Time</th>
-              <th className="px-4 py-2 border">Project</th>
-              <th className="px-4 py-2 border">Material</th>
-              <th className="px-4 py-2 border">Inward/Outward</th>
-              <th className="px-4 py-2 border">Vendor/Contractors</th>
-              <th className="px-4 py-2 border">Quantity</th>
-              <th className="px-4 py-2 border">Stock</th>
-              <th className="px-4 py-2 border">Actions</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700 text-left">S.No.</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700 text-left">Date</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700 text-left">Project</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700 text-left">Material</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700 text-left">Type</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700 text-left">Vendor/Contractor</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700 text-left">Quantity</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700 text-left">Stock</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredEntries.map(entry => (
-              <tr key={entry.id} className="text-center">
-                <td className="px-4 py-2 border">{entry.id}</td>
-                <td className="px-4 py-2 border">{entry.date}</td>
-                <td className="px-4 py-2 border">{entry.project}</td>
-                <td className="px-4 py-2 border">{entry.material}</td>
-                <td className="px-4 py-2 border">{entry.type}</td>
-                <td className="px-4 py-2 border">{entry.type === "Inward" ? entry.contractor : entry.vendor}</td>
-                <td className="px-4 py-2 border">{entry.quantity}</td>
-                <td className="px-4 py-2 border">{entry.stock}</td>
-                <td className="px-4 py-2 border">
-                  <button className="text-blue-600 hover:underline mr-2">Edit</button>
-                  <button className="text-red-600 hover:underline">Delete</button>
+            {loading && (
+              <tr>
+                <td colSpan={9} className="text-center px-4 py-6 text-gray-500">
+                  Loading…
                 </td>
               </tr>
-            ))}
+            )}
+            {!loading && filteredEntries.length === 0 && (
+              <tr>
+                <td colSpan={9} className="text-center px-4 py-6 text-gray-400 italic">
+                  No stocks found.
+                </td>
+              </tr>
+            )}
+            {!loading &&
+              filteredEntries.map((entry) => (
+                <tr key={entry._id} className="hover:bg-gray-50 transition">
+                  <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm">{entry.id}</td>
+                  <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm">{entry.date}</td>
+                  <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm">{entry.project}</td>
+                  <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-medium">{entry.material}</td>
+                  <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      entry.type === 'Inward' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                    }`}>
+                      {entry.type}
+                    </span>
+                  </td>
+                  <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm">
+                    {entry.type === "Inward" ? entry.vendorName : entry.contractorName}
+                  </td>
+                  <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold">{entry.quantity}</td>
+                  <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold">{entry.stock}</td>
+                  <td className="px-3 xl:px-4 py-3 border">
+                    <div className="flex justify-center gap-2">
+                      <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded text-xs transition">Edit</button>
+                      <button
+                        onClick={() => handleDelete(entry)}
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded text-xs transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
 
+      {/* Tablet Table View - Visible on medium screens */}
+      <div className="hidden sm:block lg:hidden overflow-x-auto bg-white shadow-lg rounded-2xl">
+        <table className="min-w-full table-auto">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="px-2 py-3 border text-xs font-semibold text-gray-700 text-left">Material/Project</th>
+              <th className="px-2 py-3 border text-xs font-semibold text-gray-700 text-left">Type/Date</th>
+              <th className="px-2 py-3 border text-xs font-semibold text-gray-700 text-left">Quantity/Stock</th>
+              <th className="px-2 py-3 border text-xs font-semibold text-gray-700 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading && (
+              <tr>
+                <td colSpan={4} className="text-center px-4 py-6 text-gray-500">
+                  Loading…
+                </td>
+              </tr>
+            )}
+            {!loading && filteredEntries.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center px-4 py-6 text-gray-400 italic">
+                  No stocks found.
+                </td>
+              </tr>
+            )}
+            {!loading &&
+              filteredEntries.map((entry) => (
+                <tr key={entry._id} className="hover:bg-gray-50 transition">
+                  <td className="px-2 py-3 border text-xs">
+                    <div className="font-medium">{entry.material}</div>
+                    <div className="text-gray-500">{entry.project}</div>
+                  </td>
+                  <td className="px-2 py-3 border text-xs">
+                    <span className={`px-2 py-1 rounded text-xs font-medium block w-fit mb-1 ${
+                      entry.type === 'Inward' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                    }`}>
+                      {entry.type}
+                    </span>
+                    <div className="text-gray-500">{entry.date}</div>
+                  </td>
+                  <td className="px-2 py-3 border text-xs">
+                    <div>Qty: <span className="font-semibold">{entry.quantity}</span></div>
+                    <div>Stock: <span className="font-semibold">{entry.stock}</span></div>
+                  </td>
+                  <td className="px-2 py-3 border">
+                    <div className="flex justify-center gap-1">
+                      <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-1 py-1 rounded text-xs transition">Edit</button>
+                      <button
+                        onClick={() => handleDelete(entry)}
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50 px-1 py-1 rounded text-xs transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile Card View - Visible only on small screens */}
+      <div className="sm:hidden space-y-4">
+        {loading && (
+          <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
+            Loading…
+          </div>
+        )}
+        {!loading && filteredEntries.length === 0 && (
+          <div className="bg-white rounded-lg shadow p-6 text-center text-gray-400 italic">
+            No stocks found.
+          </div>
+        )}
+        {!loading &&
+          filteredEntries.map((entry) => (
+            <div key={entry._id} className="bg-white rounded-lg shadow-lg p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-800 text-lg mb-1">{entry.material}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
+                      #{entry.id}
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded font-medium ${
+                      entry.type === 'Inward' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                    }`}>
+                      {entry.type}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2 ml-4">
+                  <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition">
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(entry)}
+                    className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Date:</span>
+                  <span className="text-gray-800 font-medium">{entry.date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Project:</span>
+                  <span className="text-gray-800 font-medium">{entry.project}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Quantity:</span>
+                  <span className="text-gray-800 font-semibold">{entry.quantity}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Stock:</span>
+                  <span className="text-gray-800 font-semibold">{entry.stock}</span>
+                </div>
+                <div className="pt-2 border-t">
+                  <span className="text-gray-500 block mb-1">
+                    {entry.type === "Inward" ? "Vendor:" : "Contractor:"}
+                  </span>
+                  <span className="text-gray-800 font-medium">
+                    {entry.type === "Inward" ? entry.vendorName : entry.contractorName}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+      </div>
+
       {/* Material Selection Popup */}
       {materialPopupOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30">
-          <div className="bg-white p-6 rounded-xl shadow-lg max-w-lg w-full relative">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 p-4">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg max-w-lg w-full max-h-[80vh] relative">
             <button
               onClick={() => setMaterialPopupOpen(false)}
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl font-bold"
             >
               &times;
             </button>
-            <h3 className="text-xl font-semibold mb-4">Select Materials</h3>
-            <div className="max-h-96 overflow-y-auto grid grid-cols-2 gap-2">
-              {materialsList.map((material, index) => (
-                <label key={index} className="inline-flex items-center space-x-2 border px-2 py-1 rounded hover:bg-gray-100">
-                  <input
-                    type="checkbox"
-                    name="materials"
-                    value={material}
-                    checked={filter.materials.includes(material)}
-                    onChange={handleFilterChange}
-                    className="w-4 h-4"
-                  />
-                  <span>{material}</span>
-                </label>
-              ))}
+            <h3 className="text-lg sm:text-xl font-semibold mb-4">Select Materials</h3>
+            <div className="max-h-80 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {materialsList.map((material, index) => (
+                  <label
+                    key={index}
+                    className="inline-flex items-center space-x-2 border px-2 py-2 rounded hover:bg-gray-100 cursor-pointer text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      name="materials"
+                      value={material}
+                      checked={filter.materials.includes(material)}
+                      onChange={handleFilterChange}
+                      className="w-4 h-4"
+                    />
+                    <span className="flex-1">{material}</span>
+                  </label>
+                ))}
+                {materialsList.length === 0 && (
+                  <div className="text-sm text-gray-500 col-span-2 text-center py-4">
+                    No materials found.
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setMaterialPopupOpen(false)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm"
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

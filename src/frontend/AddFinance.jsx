@@ -7,11 +7,11 @@ export default function AddFinance() {
   const [entry, setEntry] = useState({
     date: "",
     project: "General",
-    type: "Credit/debit",
+    type: "Credit", // ✅ start with valid value
     creditHead: "Other",
-    creditOption: "Customer/other",
+    creditOption: "Other",
     debitOption: "",
-    customer: "Select Customer",
+    customer: "",
     contractor: "",
     vendor: "",
     description: "",
@@ -23,150 +23,180 @@ export default function AddFinance() {
   // API states
   const [vendors, setVendors] = useState([]);
   const [contractors, setContractors] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [projects, setProjects] = useState([]);
 
-  // Fetch vendors and contractors
+  // Fetch vendors, contractors, customers, and projects
   useEffect(() => {
-    const fetchVendors = async () => {
+    const fetchData = async (url, setter) => {
       try {
-        const res = await fetch("http://localhost:8000/api/vendors");
+        const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
-          setVendors(data);
+          setter(data);
         }
       } catch (err) {
-        console.error("Error fetching vendors:", err);
+        console.error(`Error fetching ${url}:`, err);
       }
     };
 
-    const fetchContractors = async () => {
-      try {
-        const res = await fetch("http://localhost:8000/api/contractors");
-        if (res.ok) {
-          const data = await res.json();
-          setContractors(data);
-        }
-      } catch (err) {
-        console.error("Error fetching contractors:", err);
-      }
-    };
-
-    fetchVendors();
-    fetchContractors();
+    fetchData("http://localhost:8000/api/vendors", setVendors);
+    fetchData("http://localhost:8000/api/contractors", setContractors);
+    fetchData("http://localhost:8000/api/customers", setCustomers);
+    fetchData("http://localhost:8000/api/projects", setProjects);
   }, []);
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setEntry(prev => ({ ...prev, [name]: value }));
+    setEntry((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("New Finance Entry:", entry);
-    alert("Finance entry added!");
-    navigate("/dashboard/project-finance");
+
+    // ✅ basic client-side validation
+    if (!entry.date || !entry.amount || !entry.paymentRef) {
+      alert("Please fill all required fields.");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:8000/api/finances", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(entry),
+      });
+
+      if (res.ok) {
+        alert("Finance entry added!");
+        navigate("/dashboard");
+      } else {
+        const error = await res.json();
+        alert("Error: " + (error.message || "Could not add entry"));
+      }
+    } catch (err) {
+      alert("Network error: " + err.message);
+    }
   };
 
   const getPaymentLabel = () => {
     switch (entry.mode) {
-      case "Cheque": return "Cheque No.";
-      case "Account Pay": return "Transaction ID";
+      case "Cheque":
+        return "Cheque No.";
+      case "Account Pay":
+        return "Transaction ID";
       case "Cash":
       case "Major Cash":
         return "Receipt No.";
-      default: return "Reference";
+      default:
+        return "Reference";
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-12 bg-gradient-to-br from-white to-blue-50 shadow-2xl rounded-3xl p-10 border border-blue-100">
-      <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-900 tracking-wide">Add / Edit Transaction</h2>
+    <div className="min-h-screen bg-gray-50 flex items-start justify-center py-6 sm:py-12 px-4">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
+        <div className="mb-6 sm:mb-8 text-center">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
+            Add / Edit Transaction
+          </h2>
+        </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        {/* DATE & PROJECT */}
-        <div className="col-span-1 md:col-span-1">
-          <label className="block mb-2 font-medium text-blue-800">Date*</label>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        {/* DATE */}
+        <div>
+          <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Date*</label>
           <input
             type="date"
             name="date"
             value={entry.date}
             onChange={handleChange}
             required
-            className="border border-blue-300 w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
-        <div className="col-span-1 md:col-span-1">
-          <label className="block mb-2 font-medium text-blue-800">Project*</label>
+        {/* PROJECT */}
+        <div>
+          <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Project*</label>
           <select
             name="project"
             value={entry.project}
             onChange={handleChange}
-            className="border border-blue-300 w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            <option>General</option>
-            <option>Project 1</option>
-            <option>Project 2</option>
+            <option value="General">General</option>
+            {projects.map((p) =>
+              p?._id && p.name ? (
+                <option key={p._id} value={p._id}>
+                  {p.name}
+                </option>
+              ) : null
+            )}
           </select>
         </div>
 
-        {/* TRANSACTION TYPE */}
-        <div className="col-span-1 md:col-span-1">
-          <label className="block mb-2 font-medium text-blue-800">Transaction Type*</label>
+        {/* TYPE */}
+        <div>
+          <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Transaction Type*</label>
           <select
             name="type"
             value={entry.type}
             onChange={handleChange}
-            className="border border-blue-300 w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            <option>Credit/debit</option>
-            <option>Credit</option>
-            <option>Debit</option>
+            <option value="Credit">Credit</option>
+            <option value="Debit">Debit</option>
           </select>
         </div>
 
-        {/* CREDIT OPTIONS */}
+        {/* CREDIT */}
         {entry.type === "Credit" && (
-          <div className="col-span-1 md:col-span-2">
-            <label className="block mb-2 font-medium text-blue-800">Credit Option</label>
+          <div className="sm:col-span-2">
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Credit Option</label>
             <select
               name="creditOption"
               value={entry.creditOption}
               onChange={handleChange}
-              className="border border-blue-300 w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option>Customer/other</option>
-              <option>Customer</option>
-              <option>Other</option>
+              <option value="Customer">Customer</option>
+              <option value="Other">Other</option>
             </select>
 
             {entry.creditOption === "Customer" && (
-              <div className="mt-3">
-                <label className="block mb-2 font-medium text-blue-800">Select Customer</label>
+              <div className="mt-3 sm:mt-4">
+                <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Select Customer</label>
                 <select
                   name="customer"
                   value={entry.customer}
                   onChange={handleChange}
-                  className="border border-blue-300 w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option>Select Customer</option>
-                  <option>Customer 1</option>
-                  <option>Customer 2</option>
+                  <option value="">Select Customer</option>
+                  {customers.map((c) =>
+                    c?._id && c.fullName ? (
+                      <option key={c._id} value={c._id}>
+                        {c.fullName}
+                      </option>
+                    ) : null
+                  )}
                 </select>
               </div>
             )}
           </div>
         )}
 
-        {/* DEBIT OPTIONS */}
+        {/* DEBIT */}
         {entry.type === "Debit" && (
-          <div className="col-span-1 md:col-span-2 mt-2">
-            <p className="mb-2 font-medium text-blue-800">Debit Option</p>
-
-            <div className="flex flex-col gap-3">
+          <div className="sm:col-span-2">
+            <p className="mb-2 sm:mb-3 text-sm font-medium text-gray-600">Debit Option</p>
+            <div className="flex flex-col gap-3 sm:gap-4">
               {/* Labour */}
-              <div className="flex items-center gap-3">
-                <label className="inline-flex items-center text-blue-800">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                <label className="inline-flex items-center text-gray-700 text-sm sm:text-base">
                   <input
                     type="radio"
                     name="debitOption"
@@ -182,19 +212,23 @@ export default function AddFinance() {
                     name="contractor"
                     value={entry.contractor}
                     onChange={handleChange}
-                    className="border border-blue-300 px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
+                    className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select Contractor</option>
-                    {contractors.map((c, i) => (
-                      <option key={i} value={c.name || c}>{c.name || c}</option>
-                    ))}
+                    {contractors.map((c) =>
+                      c?._id && c.name ? (
+                        <option key={c._id} value={c._id}>
+                          {c.name}
+                        </option>
+                      ) : null
+                    )}
                   </select>
                 )}
               </div>
 
               {/* Material */}
-              <div className="flex items-center gap-3">
-                <label className="inline-flex items-center text-blue-800">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                <label className="inline-flex items-center text-gray-700 text-sm sm:text-base">
                   <input
                     type="radio"
                     name="debitOption"
@@ -210,18 +244,22 @@ export default function AddFinance() {
                     name="vendor"
                     value={entry.vendor}
                     onChange={handleChange}
-                    className="border border-blue-300 px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
+                    className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select Vendor</option>
-                    {vendors.map((v, i) => (
-                      <option key={i} value={v.name || v}>{v.name || v}</option>
-                    ))}
+                    {vendors.map((v) =>
+                      v?._id && v.name ? (
+                        <option key={v._id} value={v._id}>
+                          {v.name}
+                        </option>
+                      ) : null
+                    )}
                   </select>
                 )}
               </div>
 
               {/* Salary */}
-              <label className="inline-flex items-center text-blue-800">
+              <label className="inline-flex items-center text-gray-700 text-sm sm:text-base">
                 <input
                   type="radio"
                   name="debitOption"
@@ -234,7 +272,7 @@ export default function AddFinance() {
               </label>
 
               {/* Office */}
-              <label className="inline-flex items-center text-blue-800">
+              <label className="inline-flex items-center text-gray-700 text-sm sm:text-base">
                 <input
                   type="radio"
                   name="debitOption"
@@ -247,7 +285,7 @@ export default function AddFinance() {
               </label>
 
               {/* Other */}
-              <label className="inline-flex items-center text-blue-800">
+              <label className="inline-flex items-center text-gray-700 text-sm sm:text-base">
                 <input
                   type="radio"
                   name="debitOption"
@@ -263,70 +301,70 @@ export default function AddFinance() {
         )}
 
         {/* DESCRIPTION */}
-        <div className="col-span-1 md:col-span-2">
-          <label className="block mb-2 font-medium text-blue-800">Description</label>
+        <div className="sm:col-span-2">
+          <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Description</label>
           <input
             type="text"
             name="description"
             value={entry.description}
             onChange={handleChange}
-            className="border border-blue-300 w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
-        {/* MODE OF PAYMENT */}
-        <div className="col-span-1 md:col-span-1">
-          <label className="block mb-2 font-medium text-blue-800">Mode of Payment*</label>
+        {/* MODE */}
+        <div>
+          <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Mode of Payment*</label>
           <select
             name="mode"
             value={entry.mode}
             onChange={handleChange}
-            className="border border-blue-300 w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            <option>Cheque</option>
-            <option>Account Pay</option>
-            <option>Cash</option>
-            <option>Major Cash</option>
+            <option value="Cheque">Cheque</option>
+            <option value="Account Pay">Account Pay</option>
+            <option value="Cash">Cash</option>
+            <option value="Major Cash">Major Cash</option>
           </select>
         </div>
 
-        {/* PAYMENT REFERENCE */}
-        <div className="col-span-1 md:col-span-1">
-          <label className="block mb-2 font-medium text-blue-800">{getPaymentLabel()}*</label>
+        {/* PAYMENT REF */}
+        <div>
+          <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">{getPaymentLabel()}*</label>
           <input
             type="text"
             name="paymentRef"
             value={entry.paymentRef}
             onChange={handleChange}
             required
-            className="border border-blue-300 w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
         {/* AMOUNT */}
-        <div className="col-span-1 md:col-span-1">
-          <label className="block mb-2 font-medium text-blue-800">Amount*</label>
+        <div>
+          <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Amount*</label>
           <input
             type="number"
             name="amount"
             value={entry.amount}
             onChange={handleChange}
             required
-            className="border border-blue-300 w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition duration-300"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
-        {/* SUBMIT BUTTON */}
-        <div className="col-span-1 md:col-span-2 mt-6">
+        {/* SUBMIT */}
+        <div className="sm:col-span-2 mt-4 sm:mt-6">
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold py-3 rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300"
+            className="w-full py-2 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300"
           >
             Save Finance Entry
           </button>
         </div>
-
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

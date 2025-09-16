@@ -1,9 +1,10 @@
-// src/frontend/AddLead.jsx
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function AddLead() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const projectId = location.state?.projectId;
   const [lead, setLead] = useState({
     fullName: "",
     contactNo: "",
@@ -12,7 +13,32 @@ export default function AddLead() {
     note: "",
     leadType: "",
     isConverted: false,
+    aadharNo: "",
+    address: "",
+    unitNo: "",
+    amount: "",
   });
+
+  const [convertedLeads, setConvertedLeads] = useState([]);
+
+  // Fetch all converted leads
+  const fetchConvertedLeads = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/leads/converted");
+      const data = await response.json();
+      if (response.ok) {
+        setConvertedLeads(data.data);
+      } else {
+        console.error("Error fetching converted leads:", data.error);
+      }
+    } catch (err) {
+      console.error("Error connecting to server:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchConvertedLeads();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -22,35 +48,70 @@ export default function AddLead() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newLead = { ...lead };
-    console.log("New Lead Added:", newLead);
-    alert(`Lead "${lead.fullName}" added successfully!`);
-    navigate("/dashboard/leads");
+
+    try {
+      const leadData = { ...lead, project: projectId };
+      const response = await fetch("http://localhost:8000/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(leadData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(`❌ Error: ${data.error || "Something went wrong"}`);
+        return;
+      }
+
+      alert(
+        lead.isConverted
+          ? `✅ Lead "${lead.fullName}" converted to Customer successfully!`
+          : `✅ Lead "${lead.fullName}" added successfully!`
+      );
+
+      setLead({
+        fullName: "",
+        contactNo: "",
+        nextVisit: "",
+        visitDate: "",
+        note: "",
+        leadType: "",
+        isConverted: false,
+        aadharNo: "",
+        address: "",
+        unitNo: "",
+        amount: "",
+      });
+
+      if (lead.isConverted) fetchConvertedLeads();
+    } catch (err) {
+      console.error("Error adding lead:", err);
+      alert("❌ Failed to connect to server. Please try again.");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-start justify-center py-12 px-4">
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-6 sm:py-12 px-4">
+      {/* Add Lead Form */}
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8 mb-8 sm:mb-12">
+        <div className="mb-6 sm:mb-8 text-center">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
             Add New Lead
           </h2>
-          <p className="text-gray-500 mt-1 text-sm">
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">
             Fill out the form below to add a new lead
           </p>
         </div>
 
-        {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6"
-        >
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {/* Full Name */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
               Full Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -58,15 +119,14 @@ export default function AddLead() {
               name="fullName"
               value={lead.fullName}
               onChange={handleChange}
-              placeholder="Enter full name"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4]"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           {/* Contact No */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
               Contact No <span className="text-red-500">*</span>
             </label>
             <input
@@ -74,15 +134,14 @@ export default function AddLead() {
               name="contactNo"
               value={lead.contactNo}
               onChange={handleChange}
-              placeholder="Enter mobile number"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4]"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
-          {/* Visit Date */}
+          {/* Visit Dates */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
               Visit Date
             </label>
             <input
@@ -90,13 +149,12 @@ export default function AddLead() {
               name="visitDate"
               value={lead.visitDate}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4]"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
-          {/* Next Visit Date */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
               Next Visit Date
             </label>
             <input
@@ -104,13 +162,13 @@ export default function AddLead() {
               name="nextVisit"
               value={lead.nextVisit}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4]"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           {/* Note */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <div className="sm:col-span-2">
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
               Note
             </label>
             <input
@@ -118,22 +176,20 @@ export default function AddLead() {
               name="note"
               value={lead.note}
               onChange={handleChange}
-              placeholder="Add a note"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4]"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           {/* Lead Type */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
               Lead Type
             </label>
             <select
               name="leadType"
               value={lead.leadType}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4]"
-            >
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
               <option value="">Select Lead Type</option>
               <option value="Cold">Cold</option>
               <option value="Warm">Moderate</option>
@@ -141,28 +197,182 @@ export default function AddLead() {
             </select>
           </div>
 
-          {/* Is Converted */}
-          <div className="flex items-center space-x-2 md:col-span-2">
+          {/* Converted Checkbox */}
+          <div className="flex items-center space-x-2 sm:col-span-2">
             <input
               type="checkbox"
               name="isConverted"
               checked={lead.isConverted}
               onChange={handleChange}
-              className="w-4 h-4 text-[#2044E4] focus:ring-[#2044E4] border-gray-300 rounded"
+              className="w-4 h-4 border-gray-300 rounded"
             />
-            <label className="font-semibold text-gray-700">Is Converted</label>
+            <label className="text-sm sm:text-base font-medium text-gray-600">Is Converted</label>
           </div>
 
-          {/* Submit Button */}
-          <div className="md:col-span-2">
+          {/* Extra Customer Fields */}
+          {lead.isConverted && (
+            <>
+              <div>
+                <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
+                  Aadhar No
+                </label>
+                <input
+                  type="text"
+                  name="aadharNo"
+                  value={lead.aadharNo}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
+                  Address
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={lead.address}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
+                  Unit No
+                </label>
+                <input
+                  type="text"
+                  name="unitNo"
+                  value={lead.unitNo}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
+                  Amount
+                </label>
+                <input
+                  type="number"
+                  name="amount"
+                  value={lead.amount}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Submit */}
+          <div className="sm:col-span-2">
             <button
               type="submit"
-              className="w-full bg-[#2044E4] text-white py-3 rounded-lg font-medium shadow-md hover:bg-blue-700 transition"
-            >
-              Add Lead
+              className="w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 text-white rounded-lg font-semibold shadow-md hover:bg-blue-700 transition duration-200">
+              {lead.isConverted ? "Convert to Customer" : "Add Lead"}
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Converted Leads Table */}
+      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
+        <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">Converted Leads</h2>
+
+        {/* Mobile Card View */}
+        <div className="block lg:hidden space-y-4">
+          {convertedLeads.length > 0 ? (
+            convertedLeads.map((c) => (
+              <div key={c._id} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div><span className="font-medium">Name:</span> {c.fullName}</div>
+                  <div><span className="font-medium">Contact:</span> {c.contactNo}</div>
+                  <div><span className="font-medium">Aadhar:</span> {c.aadharNo}</div>
+                  <div><span className="font-medium">Unit:</span> {c.unitNo}</div>
+                  <div><span className="font-medium">Amount:</span> {c.amount}</div>
+                  <div><span className="font-medium">Type:</span> {c.leadType}</div>
+                  <div className="col-span-2"><span className="font-medium">Address:</span> {c.address}</div>
+                  <div><span className="font-medium">Visit:</span> {c.visitDate ? new Date(c.visitDate).toLocaleDateString() : "-"}</div>
+                  <div><span className="font-medium">Next:</span> {c.nextVisit ? new Date(c.nextVisit).toLocaleDateString() : "-"}</div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No converted leads found
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto">
+          <table className="w-full table-auto border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-gray-300 px-3 py-2 text-sm font-medium">Full Name</th>
+                <th className="border border-gray-300 px-3 py-2 text-sm font-medium">Contact No</th>
+                <th className="border border-gray-300 px-3 py-2 text-sm font-medium">Aadhar No</th>
+                <th className="border border-gray-300 px-3 py-2 text-sm font-medium">Address</th>
+                <th className="border border-gray-300 px-3 py-2 text-sm font-medium">Unit No</th>
+                <th className="border border-gray-300 px-3 py-2 text-sm font-medium">Amount</th>
+                <th className="border border-gray-300 px-3 py-2 text-sm font-medium">Visit Date</th>
+                <th className="border border-gray-300 px-3 py-2 text-sm font-medium">Next Visit</th>
+                <th className="border border-gray-300 px-3 py-2 text-sm font-medium">Lead Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              {convertedLeads.length > 0 ? (
+                convertedLeads.map((c) => (
+                  <tr key={c._id} className="text-center">
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      {c.fullName}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      {c.contactNo}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      {c.aadharNo}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      {c.address}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      {c.unitNo}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      {c.amount}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      {c.visitDate
+                        ? new Date(c.visitDate).toLocaleDateString()
+                        : "-"}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      {c.nextVisit
+                        ? new Date(c.nextVisit).toLocaleDateString()
+                        : "-"}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      {c.leadType}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="9" className="text-center py-8 text-gray-500">
+                    No converted leads found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

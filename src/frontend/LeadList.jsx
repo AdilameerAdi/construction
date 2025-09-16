@@ -1,9 +1,11 @@
 // src/frontend/LeadList.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function LeadList() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const projectId = location.state?.projectId;
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -14,25 +16,55 @@ export default function LeadList() {
     leadType: "",
   });
 
-  // Fetch data from API
+  // Fetch data from backend API
   useEffect(() => {
     const fetchLeads = async () => {
       try {
-        const response = await fetch("http://localhost:5000/leads"); // dummy API
+        const url = projectId 
+          ? `http://localhost:8000/api/leads?project=${projectId}`
+          : "http://localhost:8000/api/leads";
+        const response = await fetch(url);
         const data = await response.json();
-        setLeads(data);
+
+        console.log("API response:", data); // ✅ Debug check
+
+        // ✅ Always ensure leads is an array
+        if (Array.isArray(data)) {
+          setLeads(data);
+        } else if (data && Array.isArray(data.data)) {
+          setLeads(data.data);
+        } else {
+          setLeads([]);
+          console.error("Unexpected response format:", data);
+        }
       } catch (error) {
         console.error("Error fetching leads:", error);
+        setLeads([]); // fallback
       } finally {
         setLoading(false);
       }
     };
 
     fetchLeads();
-  }, []);
+  }, [projectId]);
 
-  const handleDelete = (id) => {
-    setLeads((prev) => prev.filter((lead) => lead.id !== id));
+  // Delete API + update state
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/leads/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setLeads((prev) => prev.filter((lead) => lead._id !== id));
+        alert("✅ Lead deleted successfully");
+      } else {
+        alert("❌ Failed to delete lead");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("❌ Server error while deleting");
+    }
   };
 
   const handleFilterChange = (e) => {
@@ -40,9 +72,9 @@ export default function LeadList() {
     setFilter((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Filtered leads
+  // Apply filters
   const filteredLeads = leads.filter((lead) => {
-    const leadDate = new Date(lead.date);
+    const leadDate = new Date(lead.visitDate);
     const fromDate = filter.fromDate ? new Date(filter.fromDate) : null;
     const toDate = filter.toDate ? new Date(filter.toDate) : null;
     const nextVisit = filter.nextVisit ? new Date(filter.nextVisit) : null;
@@ -56,130 +88,147 @@ export default function LeadList() {
   });
 
   if (loading) {
-    return <p className="text-center mt-6 text-gray-600">Loading leads...</p>;
+    return <p className="text-center mt-6 text-gray-600 p-4 sm:p-6">Loading leads...</p>;
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-        Lead Records
-      </h2>
-
-      {/* Add New Lead Button */}
-      <div className="mb-4 text-right">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 min-h-screen bg-gray-100">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-6">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
+          Lead Records
+        </h2>
         <button
-          onClick={() => navigate("/dashboard/add-lead")}
-          className="bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700"
+          onClick={() => navigate("/dashboard/add-lead", { state: { projectId } })}
+          className="w-full sm:w-auto bg-green-600 text-white rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base hover:bg-green-700 transition"
         >
           Add New Lead
         </button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white shadow-lg rounded-2xl p-4 mb-4 flex flex-wrap gap-4 items-center">
-        <div>
-          <label className="block mb-1 font-medium">From Date</label>
-          <input
-            type="date"
-            name="fromDate"
-            value={filter.fromDate}
-            onChange={handleFilterChange}
-            className="border px-3 py-2 rounded-lg"
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">To Date</label>
-          <input
-            type="date"
-            name="toDate"
-            value={filter.toDate}
-            onChange={handleFilterChange}
-            className="border px-3 py-2 rounded-lg"
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Next Visit Before</label>
-          <input
-            type="date"
-            name="nextVisit"
-            value={filter.nextVisit}
-            onChange={handleFilterChange}
-            className="border px-3 py-2 rounded-lg"
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Lead Type</label>
-          <select
-            name="leadType"
-            value={filter.leadType}
-            onChange={handleFilterChange}
-            className="border px-3 py-2 rounded-lg"
-          >
-            <option value="">All</option>
-            <option value="Cold">Cold</option>
-            <option value="Warm">Warm</option>
-            <option value="Hot">Hot</option>
-          </select>
-        </div>
-        <div className="flex gap-2 items-end">
-          <button
-            onClick={() =>
-              setFilter({ fromDate: "", toDate: "", nextVisit: "", leadType: "" })
-            }
-            className="bg-gray-300 px-3 py-2 rounded-lg hover:bg-gray-400"
-          >
-            Reset
-          </button>
-          <button
-            onClick={() => console.log("Search triggered")}
-            className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Search
-          </button>
+      <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">From Date</label>
+            <input
+              type="date"
+              name="fromDate"
+              value={filter.fromDate}
+              onChange={handleFilterChange}
+              className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">To Date</label>
+            <input
+              type="date"
+              name="toDate"
+              value={filter.toDate}
+              onChange={handleFilterChange}
+              className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">Next Visit Before</label>
+            <input
+              type="date"
+              name="nextVisit"
+              value={filter.nextVisit}
+              onChange={handleFilterChange}
+              className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">Lead Type</label>
+            <select
+              name="leadType"
+              value={filter.leadType}
+              onChange={handleFilterChange}
+              className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All</option>
+              <option value="Cold">Cold</option>
+              <option value="Warm">Warm</option>
+              <option value="Hot">Hot</option>
+            </select>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+            <button
+              onClick={() =>
+                setFilter({ fromDate: "", toDate: "", nextVisit: "", leadType: "" })
+              }
+              className="w-full sm:w-auto bg-gray-300 px-3 py-2 rounded-lg text-sm hover:bg-gray-400 transition"
+            >
+              Reset
+            </button>
+            <button
+              onClick={() => console.log("Search triggered")}
+              className="w-full sm:w-auto bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700 transition"
+            >
+              Search
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Leads Table */}
-      <div className="overflow-x-auto bg-white shadow-lg rounded-2xl">
+      {/* Desktop Table View - Hidden on small screens */}
+      <div className="hidden lg:block overflow-x-auto bg-white shadow-lg rounded-2xl">
         <table className="min-w-full table-auto">
           <thead className="bg-gray-100">
             <tr className="text-center">
-              <th className="px-4 py-2 border">Date/Time</th>
-              <th className="px-4 py-2 border">Full Name</th>
-              <th className="px-4 py-2 border">Contact No</th>
-              <th className="px-4 py-2 border">Next Visit</th>
-              <th className="px-4 py-2 border">Note</th>
-              <th className="px-4 py-2 border">Lead Type</th>
-              <th className="px-4 py-2 border">Is Converted</th>
-              <th className="px-4 py-2 border">Actions</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700">Visit Date</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700">Full Name</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700">Contact No</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700">Next Visit</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700">Note</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700">Lead Type</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700">Converted</th>
+              <th className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold text-gray-700">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredLeads.map((lead) => (
-              <tr key={lead.id} className="text-center">
-                <td className="px-4 py-2 border">{lead.date}</td>
-                <td className="px-4 py-2 border">{lead.fullName}</td>
-                <td className="px-4 py-2 border">{lead.contactNo}</td>
-                <td className="px-4 py-2 border">{lead.nextVisit}</td>
-                <td className="px-4 py-2 border">{lead.note}</td>
-                <td className="px-4 py-2 border">{lead.leadType}</td>
-                <td className="px-4 py-2 border">
-                  {lead.isConverted ? "Yes" : "No"}
+              <tr key={lead._id} className="text-center hover:bg-gray-50">
+                <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm">{lead.visitDate}</td>
+                <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-medium">{lead.fullName}</td>
+                <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm">{lead.contactNo}</td>
+                <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm">{lead.nextVisit}</td>
+                <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm max-w-xs truncate">{lead.note}</td>
+                <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm">
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    lead.leadType === 'Hot' ? 'bg-red-100 text-red-600' :
+                    lead.leadType === 'Warm' ? 'bg-yellow-100 text-yellow-600' :
+                    'bg-blue-100 text-blue-600'
+                  }`}>
+                    {lead.leadType}
+                  </span>
                 </td>
-                <td className="px-4 py-2 border space-x-2">
-                  <button className="text-blue-600 hover:underline">Edit</button>
-                  <button
-                    className="text-red-600 hover:underline"
-                    onClick={() => handleDelete(lead.id)}
-                  >
-                    Delete
-                  </button>
+                <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm">
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    lead.isConverted ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {lead.isConverted ? "Yes" : "No"}
+                  </span>
+                </td>
+                <td className="px-3 xl:px-4 py-3 border">
+                  <div className="flex justify-center gap-2">
+                    <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded text-xs transition">Edit</button>
+                    <button
+                      className="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded text-xs transition"
+                      onClick={() => handleDelete(lead._id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
             {filteredLeads.length === 0 && (
               <tr>
-                <td colSpan="8" className="text-center px-4 py-2 border text-gray-500">
+                <td
+                  colSpan="8"
+                  className="text-center px-4 py-6 border text-gray-500 italic"
+                >
                   No leads found
                 </td>
               </tr>
@@ -187,6 +236,130 @@ export default function LeadList() {
           </tbody>
         </table>
       </div>
+
+      {/* Tablet Table View - Visible on medium screens */}
+      <div className="hidden sm:block lg:hidden overflow-x-auto bg-white shadow-lg rounded-2xl">
+        <table className="min-w-full table-auto">
+          <thead className="bg-gray-100">
+            <tr className="text-center">
+              <th className="px-2 py-3 border text-xs font-semibold text-gray-700">Name</th>
+              <th className="px-2 py-3 border text-xs font-semibold text-gray-700">Contact</th>
+              <th className="px-2 py-3 border text-xs font-semibold text-gray-700">Type</th>
+              <th className="px-2 py-3 border text-xs font-semibold text-gray-700">Next Visit</th>
+              <th className="px-2 py-3 border text-xs font-semibold text-gray-700">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredLeads.map((lead) => (
+              <tr key={lead._id} className="text-center hover:bg-gray-50">
+                <td className="px-2 py-3 border text-xs">
+                  <div className="font-medium">{lead.fullName}</div>
+                  <div className="text-gray-500 text-xs">Visit: {lead.visitDate}</div>
+                </td>
+                <td className="px-2 py-3 border text-xs">{lead.contactNo}</td>
+                <td className="px-2 py-3 border text-xs">
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    lead.leadType === 'Hot' ? 'bg-red-100 text-red-600' :
+                    lead.leadType === 'Warm' ? 'bg-yellow-100 text-yellow-600' :
+                    'bg-blue-100 text-blue-600'
+                  }`}>
+                    {lead.leadType}
+                  </span>
+                </td>
+                <td className="px-2 py-3 border text-xs">{lead.nextVisit}</td>
+                <td className="px-2 py-3 border">
+                  <div className="flex justify-center gap-1">
+                    <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-1 py-1 rounded text-xs transition">Edit</button>
+                    <button
+                      className="text-red-600 hover:text-red-800 hover:bg-red-50 px-1 py-1 rounded text-xs transition"
+                      onClick={() => handleDelete(lead._id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {filteredLeads.length === 0 && (
+              <tr>
+                <td
+                  colSpan="5"
+                  className="text-center px-4 py-6 border text-gray-500 italic"
+                >
+                  No leads found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile Card View - Visible only on small screens */}
+      <div className="sm:hidden space-y-4">
+        {filteredLeads.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500 italic">
+            No leads found
+          </div>
+        ) : (
+          filteredLeads.map((lead) => (
+            <div key={lead._id} className="bg-white rounded-lg shadow-lg p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-800 text-lg mb-1">{lead.fullName}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-xs px-2 py-1 rounded font-medium ${
+                      lead.leadType === 'Hot' ? 'bg-red-100 text-red-600' :
+                      lead.leadType === 'Warm' ? 'bg-yellow-100 text-yellow-600' :
+                      'bg-blue-100 text-blue-600'
+                    }`}>
+                      {lead.leadType}
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded font-medium ${
+                      lead.isConverted ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {lead.isConverted ? "Converted" : "Not Converted"}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2 ml-4">
+                  <button className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition">
+                    Edit
+                  </button>
+                  <button
+                    className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition"
+                    onClick={() => handleDelete(lead._id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Contact:</span>
+                  <span className="text-gray-800 font-medium">{lead.contactNo}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Visit Date:</span>
+                  <span className="text-gray-800 font-medium">{lead.visitDate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Next Visit:</span>
+                  <span className="text-gray-800 font-medium">{lead.nextVisit}</span>
+                </div>
+                {lead.note && (
+                  <div className="pt-2 border-t">
+                    <span className="text-gray-500 block mb-1">Note:</span>
+                    <span className="text-gray-800 text-sm">{lead.note}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
+
+

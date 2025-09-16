@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function AddMaterial() {
   const [formData, setFormData] = useState({
@@ -7,67 +8,66 @@ export default function AddMaterial() {
     unit: "",
     status: "Active",
   });
-
+  const navigate = useNavigate();
+  const location = useLocation();
   const [activities, setActivities] = useState([]);
   const [units, setUnits] = useState([]);
 
-  // ✅ Fetch activities & units for dropdown
+  // Fetch activities and units from database
   useEffect(() => {
-    const fetchDropdowns = async () => {
+    const fetchData = async () => {
       try {
-        const [actRes, unitRes] = await Promise.all([
-          fetch("http://localhost:8000/api/activities"),
-          fetch("http://localhost:8000/api/units"),
-        ]);
-        const [actData, unitData] = await Promise.all([
-          actRes.json(),
-          unitRes.json(),
-        ]);
-        setActivities(actData);
-        setUnits(unitData);
-      } catch (error) {
-        console.error("Error fetching dropdown data:", error);
+        const activitiesRes = await fetch("http://localhost:8000/api/activities");
+        const activitiesData = await activitiesRes.json();
+        setActivities(Array.isArray(activitiesData) ? activitiesData : []);
+
+        const unitsRes = await fetch("http://localhost:8000/api/units");
+        const unitsData = await unitsRes.json();
+        setUnits(Array.isArray(unitsData) ? unitsData : []);
+      } catch (err) {
+        console.error("Error fetching data:", err);
       }
     };
-    fetchDropdowns();
+    fetchData();
   }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // ✅ Submit form to API
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     try {
       const res = await fetch("http://localhost:8000/api/materials", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       });
-
+      
       if (res.ok) {
-        const saved = await res.json();
-        console.log("Material saved:", saved);
         alert("Material added successfully!");
+        
+        // Reset form
         setFormData({ activity: "", name: "", unit: "", status: "Active" });
+        
+        // Navigate back to materials list
+        navigate("/dashboard/material");
       } else {
-        const err = await res.json();
-        console.error("Failed to save material:", err);
-        alert("Error: " + err.error);
+        alert("Error adding material");
       }
     } catch (err) {
-      console.error(err);
-      alert("Something went wrong!");
+      console.error("Error saving material:", err);
+      alert("Error adding material");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-start justify-center py-12 px-4">
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+    <div className="min-h-screen bg-gray-50 flex items-start justify-center py-6 sm:py-12 px-4">
+      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+        <div className="mb-6 sm:mb-8 text-center">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">
             Add Material
           </h2>
           <p className="text-gray-500 mt-1 text-sm">
@@ -78,7 +78,7 @@ export default function AddMaterial() {
         {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"
         >
           {/* Activity Dropdown */}
           <div>
@@ -89,9 +89,9 @@ export default function AddMaterial() {
               name="activity"
               value={formData.activity}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                         focus:outline-none focus:ring-2 focus:ring-[#2044E4] 
-                         focus:border-[#2044E4] transition"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg
+                         focus:outline-none focus:ring-2 focus:ring-[#2044E4]
+                         focus:border-[#2044E4] transition text-sm sm:text-base"
               required
             >
               <option value="">Select Activity</option>
@@ -114,9 +114,9 @@ export default function AddMaterial() {
               value={formData.name}
               onChange={handleChange}
               placeholder="Enter material name"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                         focus:outline-none focus:ring-2 focus:ring-[#2044E4] 
-                         focus:border-[#2044E4] transition"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg
+                         focus:outline-none focus:ring-2 focus:ring-[#2044E4]
+                         focus:border-[#2044E4] transition text-sm sm:text-base"
               required
             />
           </div>
@@ -130,9 +130,9 @@ export default function AddMaterial() {
               name="unit"
               value={formData.unit}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                         focus:outline-none focus:ring-2 focus:ring-[#2044E4] 
-                         focus:border-[#2044E4] transition"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg
+                         focus:outline-none focus:ring-2 focus:ring-[#2044E4]
+                         focus:border-[#2044E4] transition text-sm sm:text-base"
               required
             >
               <option value="">Select Unit</option>
@@ -153,9 +153,9 @@ export default function AddMaterial() {
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                         focus:outline-none focus:ring-2 focus:ring-[#2044E4] 
-                         focus:border-[#2044E4] transition"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg
+                         focus:outline-none focus:ring-2 focus:ring-[#2044E4]
+                         focus:border-[#2044E4] transition text-sm sm:text-base"
               required
             >
               <option value="Active">Active</option>
@@ -164,11 +164,11 @@ export default function AddMaterial() {
           </div>
 
           {/* Submit Button */}
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2">
             <button
               type="submit"
-              className="w-full bg-[#2044E4] text-white py-3 rounded-lg 
-                         font-medium shadow-md hover:bg-blue-700 transition"
+              className="w-full bg-[#2044E4] text-white py-2 sm:py-3 rounded-lg
+                         font-medium shadow-md hover:bg-blue-700 transition text-sm sm:text-base"
             >
               Submit
             </button>

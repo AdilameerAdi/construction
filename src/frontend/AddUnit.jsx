@@ -34,45 +34,54 @@ export default function AddUnit() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Add Unit</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Unit Name */}
-        <div>
-          <label className="block mb-1 font-medium">Unit Name*</label>
-          <input
-            type="text"
-            name="unitName"
-            value={unitName}
-            onChange={(e) => setUnitName(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
+    <div className="min-h-screen bg-gray-50 flex items-start justify-center py-6 sm:py-12 px-4">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
+        <div className="mb-6 sm:mb-8 text-center">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
+            Add Unit
+          </h2>
         </div>
 
-        {/* Status */}
-        <div>
-          <label className="block mb-1 font-medium">Status*</label>
-          <select
-            name="status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          >
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-        </div>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          {/* Unit Name */}
+          <div>
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Unit Name*</label>
+            <input
+              type="text"
+              name="unitName"
+              value={unitName}
+              onChange={(e) => setUnitName(e.target.value)}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-        >
-          Submit
-        </button>
-      </form>
+          {/* Status */}
+          <div>
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Status*</label>
+            <select
+              name="status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+
+          {/* Submit Button */}
+          <div className="sm:col-span-2">
+            <button
+              type="submit"
+              className="w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 text-white rounded-lg font-semibold shadow-md hover:bg-blue-700 transition duration-200"
+            >
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

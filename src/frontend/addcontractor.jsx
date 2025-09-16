@@ -70,14 +70,14 @@ export default function AddContractor() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-start justify-center py-12 px-4">
-      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+    <div className="min-h-screen bg-gray-50 flex items-start justify-center py-6 sm:py-12 px-4 sm:px-6">
+      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+        <div className="mb-6 sm:mb-8 text-center">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">
             Contractor Details
           </h2>
-          <p className="text-gray-500 mt-1 text-sm">
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">
             Fill out the form below to add a new contractor
           </p>
         </div>
@@ -85,18 +85,18 @@ export default function AddContractor() {
         {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"
         >
           {/* Activity Dropdown */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
               Activity <span className="text-red-500">*</span>
             </label>
             <select
               name="activity"
               value={formData.activity}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition-colors"
               required
             >
               <option value="">Select Activity</option>
@@ -110,7 +110,7 @@ export default function AddContractor() {
 
           {/* Name */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
               Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -119,14 +119,14 @@ export default function AddContractor() {
               value={formData.name}
               onChange={handleChange}
               placeholder="Enter contractor name"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition-colors"
               required
             />
           </div>
 
           {/* PAN */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
               PAN
             </label>
             <input
@@ -135,13 +135,13 @@ export default function AddContractor() {
               value={formData.pan}
               onChange={handleChange}
               placeholder="Enter PAN number"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition-colors"
             />
           </div>
 
           {/* Contact */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
               Contact Details
             </label>
             <input
@@ -150,13 +150,13 @@ export default function AddContractor() {
               value={formData.contact}
               onChange={handleChange}
               placeholder="Enter contact number"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition-colors"
             />
           </div>
 
           {/* Bank */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
               Bank Details
             </label>
             <input
@@ -165,13 +165,13 @@ export default function AddContractor() {
               value={formData.bank}
               onChange={handleChange}
               placeholder="Enter bank name"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition-colors"
             />
           </div>
 
           {/* Account No */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
               Account No.
             </label>
             <input
@@ -180,13 +180,13 @@ export default function AddContractor() {
               value={formData.accountNo}
               onChange={handleChange}
               placeholder="Enter account number"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition-colors"
             />
           </div>
 
           {/* IFSC */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
               IFSC Code
             </label>
             <input
@@ -195,15 +195,15 @@ export default function AddContractor() {
               value={formData.ifsc}
               onChange={handleChange}
               placeholder="Enter IFSC code"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2044E4] focus:border-[#2044E4] transition-colors"
             />
           </div>
 
           {/* Submit Button */}
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2">
             <button
               type="submit"
-              className="w-full bg-[#2044E4] text-white py-3 rounded-lg font-medium shadow-md hover:bg-blue-700 transition"
+              className="w-full bg-[#2044E4] text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg font-medium shadow-md hover:bg-blue-700 transition-colors"
             >
               Submit
             </button>
