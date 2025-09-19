@@ -80,6 +80,11 @@ export default function Activity() {
     }
   };
 
+  // ✅ Sort activities alphabetically by title
+  const sortedActivities = [...activities].sort((a, b) =>
+    a.title.localeCompare(b.title)
+  );
+
   return (
     <div className="flex-1 p-4 sm:p-6 bg-gray-50 min-h-screen">
       {/* Page Heading */}
@@ -106,12 +111,12 @@ export default function Activity() {
           <div className="bg-white rounded-xl shadow p-6 text-center text-red-500">
             {error}
           </div>
-        ) : activities.length === 0 ? (
+        ) : sortedActivities.length === 0 ? (
           <div className="bg-white rounded-xl shadow p-6 text-center text-gray-400 italic">
             No activities found.
           </div>
         ) : (
-          activities.map((activity, index) => (
+          sortedActivities.map((activity, index) => (
             <div key={activity._id} className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
@@ -185,7 +190,7 @@ export default function Activity() {
                     {error}
                   </td>
                 </tr>
-              ) : activities.length === 0 ? (
+              ) : sortedActivities.length === 0 ? (
                 <tr>
                   <td
                     colSpan={4}
@@ -195,7 +200,7 @@ export default function Activity() {
                   </td>
                 </tr>
               ) : (
-                activities.map((activity, index) => (
+                sortedActivities.map((activity, index) => (
                   <tr
                     key={activity._id}
                     className="hover:bg-gray-50 transition-colors duration-150"

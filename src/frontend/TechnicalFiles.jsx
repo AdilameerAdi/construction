@@ -26,22 +26,28 @@ export default function TechnicalFiles() {
   }, []);
 
   // ✅ Fetch technical files list
-  useEffect(() => {
-    const fetchFiles = async () => {
-      try {
-        const url = projectId 
-          ? `http://localhost:8000/api/technical-files?project=${projectId}`
-          : "http://localhost:8000/api/technical-files";
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to fetch files");
-        const data = await res.json();
-        setFiles(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Files fetch error:", err);
-      }
-    };
-    fetchFiles();
-  }, [projectId]);
+ useEffect(() => {
+  const fetchFiles = async () => {
+    try {
+      const url = projectId 
+        ? `http://localhost:8000/api/technical-files?project=${projectId}`
+        : "http://localhost:8000/api/technical-files";
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch files");
+      const data = await res.json();
+
+      // ✅ Ensure array and sort by activity alphabetically
+      const sorted = (Array.isArray(data) ? data : []).sort((a, b) =>
+        (a.activity || "").toLowerCase().localeCompare((b.activity || "").toLowerCase())
+      );
+
+      setFiles(sorted);
+    } catch (err) {
+      console.error("Files fetch error:", err);
+    }
+  };
+  fetchFiles();
+}, [projectId]);
 
   // ✅ Upload new file
   const handleUpload = async (e) => {

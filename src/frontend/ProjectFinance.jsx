@@ -5,6 +5,10 @@ import { useNavigate } from "react-router-dom";
 export default function ProjectFinance() {
   const navigate = useNavigate();
 
+  const handlePrintPDF = () => {
+    window.print();
+  };
+
   // Finance entries fetched from backend
   const [financeEntries, setFinanceEntries] = useState([]);
 
@@ -106,7 +110,26 @@ export default function ProjectFinance() {
   // Handle filter changes
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilter((prev) => ({ ...prev, [name]: value }));
+    setFilter((prev) => {
+      const newFilter = { ...prev, [name]: value };
+
+      // Reset related filters when type changes
+      if (name === 'type') {
+        newFilter.subType = '';
+        newFilter.customer = '';
+        newFilter.vendor = '';
+        newFilter.contractor = '';
+      }
+
+      // Reset entity filters when subType changes
+      if (name === 'subType') {
+        newFilter.customer = '';
+        newFilter.vendor = '';
+        newFilter.contractor = '';
+      }
+
+      return newFilter;
+    });
   };
 
   const projectIdToName = new Map(projects.filter(p => p && p._id).map(p => [p._id, p.name]));
@@ -116,33 +139,9 @@ export default function ProjectFinance() {
     return projectIdToName.get(p) || p;
   };
 
-  // Filtered entries - adjust matching for name text inputs
+  // Filtered entries - simplified and fixed logic
   const filteredEntries = financeEntries.filter((entry) => {
-    // Debug output for filter logic
-    if (filter.type === "Credit" && filter.subType === "Customer") {
-      console.log('Credit/Customer:', {
-        entryCustomer: entry.customer?._id,
-        filterCustomer: filter.customer,
-        entrySubType: entry.subType,
-        matchesCustomer: filter.customer ? (entry.customer && entry.customer._id === filter.customer) : (entry.subType === "Customer")
-      });
-    }
-    if (filter.type === "Debit" && filter.subType === "Material") {
-      console.log('Debit/Material:', {
-        entryVendor: entry.vendor?._id,
-        filterVendor: filter.vendor,
-        entrySubType: entry.subType,
-        matchesVendor: filter.vendor ? (entry.vendor && entry.vendor._id === filter.vendor) : (entry.subType === "Material")
-      });
-    }
-    if (filter.type === "Debit" && filter.subType === "Labour") {
-      console.log('Debit/Labour:', {
-        entryContractor: entry.contractor?._id,
-        filterContractor: filter.contractor,
-        entrySubType: entry.subType,
-        matchesContractor: filter.contractor ? (entry.contractor && entry.contractor._id === filter.contractor) : (entry.subType === "Labour")
-      });
-    }
+    // Date filtering
     const entryDate = new Date(entry.date);
     const from = filter.fromDate ? new Date(filter.fromDate) : null;
     const to = filter.toDate ? new Date(filter.toDate) : null;
@@ -152,73 +151,36 @@ export default function ProjectFinance() {
     else if (from) matchesDate = entryDate >= from;
     else if (to) matchesDate = entryDate <= to;
 
-    let matchesType = !filter.type || entry.type === filter.type;
-    let matchesSubType =
-      !filter.subType ||
-      (filter.type === "Credit" && entry.subType === filter.subType) ||
-      (filter.type === "Debit" && entry.subType === filter.subType);
+    // Type filtering (Credit/Debit)
+    const matchesType = !filter.type || entry.type === filter.type;
 
-    // Credit logic: Customer radio selected
-    let matchesCustomer = true;
-    if (filter.type === "Credit") {
-      if (filter.subType === "Customer") {
-        if (filter.customer) {
-          matchesCustomer = entry.customer && entry.customer._id === filter.customer;
-        } else {
-          matchesCustomer = entry.subType === "Customer";
-        }
-      } else if (filter.subType === "Other") {
-        matchesCustomer = entry.subType === "Other" || entry.creditOption === "Other";
-      } else {
-        // If no radio selected, do not filter by customer
-        matchesCustomer = true;
-      }
+    // SubType filtering
+    let matchesSubType = true;
+    if (filter.subType) {
+      // Check if entry matches the selected subType
+      matchesSubType = entry.subType === filter.subType ||
+                      entry.creditOption === filter.subType ||
+                      entry.debitOption === filter.subType;
     }
 
-    // Debit logic: Vendor/Contractor radio selected
-    let matchesVendor = true;
-    let matchesContractor = true;
-
-    if (filter.type === "Debit") {
-      if (filter.subType === "Material") {
-        if (filter.vendor) {
-          matchesVendor = entry.vendor && entry.vendor._id === filter.vendor;
-        } else {
-          matchesVendor = entry.subType === "Material";
-        }
-      } else if (filter.subType === "Labour") {
-        if (filter.contractor) {
-          matchesContractor = entry.contractor && entry.contractor._id === filter.contractor;
-        } else {
-          matchesContractor = entry.subType === "Labour";
-        }
-      } else if (["Salary", "Office", "Other"].includes(filter.subType)) {
-        matchesVendor = entry.subType === filter.subType || entry.debitOption === filter.subType;
-        matchesContractor = entry.subType === filter.subType || entry.debitOption === filter.subType;
-      } else {
-        // If no radio selected, do not filter by vendor/contractor
-        matchesVendor = true;
-        matchesContractor = true;
-      }
+    // Entity-specific filtering (Customer/Vendor/Contractor)
+    let matchesEntity = true;
+    if (filter.customer && filter.subType === "Customer") {
+      matchesEntity = entry.customer && entry.customer._id === filter.customer;
+    } else if (filter.vendor && filter.subType === "Material") {
+      matchesEntity = entry.vendor && entry.vendor._id === filter.vendor;
+    } else if (filter.contractor && filter.subType === "Labour") {
+      matchesEntity = entry.contractor && entry.contractor._id === filter.contractor;
     }
 
+    // Project filtering
     const projectName = resolveProjectName(entry.project) || "";
     const matchesProject = !filter.project || projectName.toLowerCase().includes(filter.project.toLowerCase());
 
-    let matchesMode =
-      !filter.mode ||
-      entry.mode.toLowerCase().includes(filter.mode.toLowerCase());
+    // Mode filtering
+    const matchesMode = !filter.mode || entry.mode.toLowerCase().includes(filter.mode.toLowerCase());
 
-    return (
-      matchesDate &&
-      matchesType &&
-      matchesSubType &&
-      matchesCustomer &&
-      matchesVendor &&
-      matchesContractor &&
-      matchesProject &&
-      matchesMode
-    );
+    return matchesDate && matchesType && matchesSubType && matchesEntity && matchesProject && matchesMode;
   });
 
   // Total credit/debit
@@ -230,22 +192,58 @@ export default function ProjectFinance() {
     .reduce((acc, curr) => acc + Number(curr.amount), 0);
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 min-h-screen bg-gray-100">
+    <>
+      {/* Print Styles */}
+      <style jsx>{`
+        @media print {
+          body * { visibility: hidden; }
+          .print-area, .print-area * { visibility: visible; }
+          .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+          .print-hidden { display: none !important; }
+          .no-print { display: none !important; }
+
+          /* Remove shadows and rounded corners for print */
+          .shadow-lg, .shadow-xl { box-shadow: none !important; }
+          .rounded-2xl, .rounded-xl, .rounded-lg { border-radius: 0 !important; }
+
+          /* Ensure tables fit on page */
+          table { page-break-inside: auto; }
+          tr { page-break-inside: avoid; page-break-after: auto; }
+          th, td { page-break-inside: avoid; }
+
+          /* Print typography */
+          .print-area { font-size: 12px; line-height: 1.4; }
+          h1, h2 { font-size: 18px; margin-bottom: 16px; }
+
+          /* Page margins */
+          @page { margin: 0.5in; }
+        }
+      `}</style>
+
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 min-h-screen bg-gray-100 print-area">
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-6">
         <h2 className="text-xl sm:text-2xl lg:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-600">
           Project Finance
         </h2>
-        <button
-          onClick={() => navigate("/dashboard/add-finance")}
-          className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
-        >
-          + Add New Finance
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={handlePrintPDF}
+            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 no-print"
+          >
+            📄 Print / Save as PDF
+          </button>
+          <button
+            onClick={() => navigate("/dashboard/add-finance")}
+            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 no-print"
+          >
+            + Add New Finance
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white shadow-xl rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 border border-gray-100">
+      <div className="bg-white shadow-xl rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 border border-gray-100 no-print">
         <h3 className="text-base sm:text-lg font-semibold mb-4 sm:mb-5 text-gray-700 border-b pb-2">
           🔎 Filters
         </h3>
@@ -613,7 +611,7 @@ export default function ProjectFinance() {
       </div>
 
       {/* Mobile Card View - Visible only on small screens */}
-      <div className="sm:hidden space-y-4">
+      <div className="sm:hidden space-y-4 no-print">
         {filteredEntries.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500 italic">
             No finance entries found
@@ -689,5 +687,6 @@ export default function ProjectFinance() {
         )}
       </div>
     </div>
+    </>
   );
 }

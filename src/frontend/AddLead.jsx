@@ -182,7 +182,7 @@ export default function AddLead() {
           {/* Visit Dates */}
           <div>
             <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
-              Visit Date
+        Preset Visit Date
             </label>
             <input
               type="date"

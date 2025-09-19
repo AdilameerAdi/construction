@@ -12,6 +12,8 @@ export default function AddStock() {
   const [materials, setMaterials] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [contractors, setContractors] = useState([]);
+  const [stockData, setStockData] = useState([]);
+  const [currentStock, setCurrentStock] = useState(0);
 
   // Form state
   const [newStock, setNewStock] = useState({
@@ -21,7 +23,6 @@ export default function AddStock() {
     type: "",
     vendor: "",
     quantity: "",
-    stock: "",
   });
 
   // Fetch dropdown data once
@@ -33,34 +34,64 @@ export default function AddStock() {
         const mRes = await fetch("http://localhost:8000/api/materials", { signal: ac.signal });
         if (mRes.ok) {
           const mJson = await mRes.json();
-          setMaterials(
-            (Array.isArray(mJson) ? mJson : []).map((x) => ({
-              _id: x?._id,
-              title: x?.title || x?.name || x?.label || "Untitled",
-            }))
-          );
+          const cleaned = (Array.isArray(mJson) ? mJson : []).map((x) => ({
+            _id: x?._id,
+            title: (x?.title || x?.name || x?.label || "Untitled").trim(),
+          }));
+
+          // ✅ sort here
+          const sorted = cleaned.sort((a, b) => {
+            const regex = /^\d/;
+            const aNum = regex.test(a.title);
+            const bNum = regex.test(b.title);
+
+            if (aNum && !bNum) return -1;
+            if (!aNum && bNum) return 1;
+
+            return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
+          });
+
+          console.log("Sorted materials:", sorted.map((m) => m.title)); // debug
+          setMaterials(sorted);
         }
 
-        const vRes = await fetch("http://localhost:8000/api/vendors", { signal: ac.signal });
-        if (vRes.ok) {
-          const vJson = await vRes.json();
-          setVendors(
-            (Array.isArray(vJson) ? vJson : []).map((x) => ({
-              _id: x?._id,
-              title: x?.title || x?.name || x?.label || "Unnamed Vendor",
-            }))
-          );
-        }
+      const vRes = await fetch("http://localhost:8000/api/vendors", { signal: ac.signal });
+if (vRes.ok) {
+  const vJson = await vRes.json();
+  const cleanedVendors = (Array.isArray(vJson) ? vJson : []).map((x) => ({
+    _id: x?._id,
+    title: (x?.title || x?.name || x?.label || "Unnamed Vendor").trim(),
+  }));
 
-        const cRes = await fetch("http://localhost:8000/api/contractors", { signal: ac.signal });
-        if (cRes.ok) {
-          const cJson = await cRes.json();
-          setContractors(
-            (Array.isArray(cJson) ? cJson : []).map((x) => ({
-              _id: x?._id,
-              title: x?.title || x?.name || x?.label || "Unnamed Contractor",
-            }))
-          );
+  // ✅ sort vendors alphabetically
+  const sortedVendors = cleanedVendors.sort((a, b) =>
+    a.title.toLowerCase().localeCompare(b.title.toLowerCase())
+  );
+
+  setVendors(sortedVendors);
+}
+
+const cRes = await fetch("http://localhost:8000/api/contractors", { signal: ac.signal });
+if (cRes.ok) {
+  const cJson = await cRes.json();
+  const cleanedContractors = (Array.isArray(cJson) ? cJson : []).map((x) => ({
+    _id: x?._id,
+    title: (x?.title || x?.name || x?.label || "Unnamed Contractor").trim(),
+  }));
+
+  // ✅ sort contractors alphabetically
+  const sortedContractors = cleanedContractors.sort((a, b) =>
+    a.title.toLowerCase().localeCompare(b.title.toLowerCase())
+  );
+
+  setContractors(sortedContractors);
+}
+
+        // Fetch stock data for calculations
+        const sRes = await fetch("http://localhost:8000/api/stocks", { signal: ac.signal });
+        if (sRes.ok) {
+          const sJson = await sRes.json();
+          setStockData(Array.isArray(sJson) ? sJson : []);
         }
       } catch (err) {
         if (err.name !== "AbortError") console.error(err);
@@ -81,26 +112,57 @@ export default function AddStock() {
         const data = await r.json();
         const src = Array.isArray(data) ? data[0] : (data?.data || data);
         if (src) {
+          const materialId = src.material?._id || src.material || "";
           setNewStock({
-            date: src.date ? src.date.substring(0,10) : "",
+            date: src.date ? src.date.substring(0, 10) : "",
             project: src.project || "",
-            material: src.material?._id || src.material || "",
+            material: materialId,
             type: src.type || "",
             vendor: src.vendor?._id || src.contractor?._id || "",
             quantity: String(src.quantity ?? ""),
-            stock: String(src.stock ?? ""),
           });
+          // Calculate stock for the pre-selected material
+          if (materialId && stockData.length > 0) {
+            calculateCurrentStock(materialId);
+          }
         }
       } catch (e) {
         console.error(e);
         alert("Failed to load stock entry for editing");
       }
     })();
-  }, [editId]);
+  }, [editId, stockData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNewStock((prev) => ({ ...prev, [name]: value }));
+
+    // Calculate current stock when material changes
+    if (name === "material" && value) {
+      calculateCurrentStock(value);
+    }
+  };
+
+  // Calculate current stock for selected material
+  const calculateCurrentStock = (materialId) => {
+    const materialStocks = stockData.filter(
+      (stock) => stock.material?._id === materialId || stock.material === materialId
+    );
+
+    // Sort by date to calculate running total
+    const sortedStocks = materialStocks.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    let runningTotal = 0;
+    sortedStocks.forEach((stock) => {
+      const qty = Number(stock.quantity || 0);
+      if (stock.type === "Inward") {
+        runningTotal += qty;
+      } else if (stock.type === "Outward") {
+        runningTotal -= qty;
+      }
+    });
+
+    setCurrentStock(Math.max(0, runningTotal)); // Don't show negative stock
   };
 
   const handleSubmit = async (e) => {
@@ -112,7 +174,6 @@ export default function AddStock() {
       material: newStock.material,
       type: newStock.type,
       quantity: Number(newStock.quantity),
-      stock: Number(newStock.stock),
       vendor: newStock.type === "Inward" ? newStock.vendor : null,
       contractor: newStock.type === "Outward" ? newStock.vendor : null,
     };
@@ -141,7 +202,6 @@ export default function AddStock() {
         type: "",
         vendor: "",
         quantity: "",
-        stock: "",
       });
       navigate("/dashboard/stock-management", { state: { projectId } });
     } catch (error) {
@@ -206,11 +266,21 @@ export default function AddStock() {
                 </option>
               ))}
             </select>
+
+            {newStock.material && (
+              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                <span className="font-medium text-blue-800">
+                  Current Stock: <span className="font-bold">{currentStock}</span> units
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Inward/Outward */}
           <div>
-            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Inward / Outward*</label>
+            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
+              Inward / Outward*
+            </label>
             <select
               name="type"
               value={newStock.type}
@@ -263,20 +333,15 @@ export default function AddStock() {
               required
               className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-          </div>
-
-          {/* Stock */}
-          <div>
-            <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">Stock*</label>
-            <input
-              type="number"
-              name="stock"
-              value={newStock.stock}
-              onChange={handleChange}
-              placeholder="Enter Total Stock"
-              required
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+            {newStock.type === "Outward" &&
+              newStock.quantity &&
+              Number(newStock.quantity) > currentStock && (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm">
+                  <span className="font-medium text-red-800">
+                    ⚠️ Warning: Insufficient stock! Available: {currentStock} units
+                  </span>
+                </div>
+              )}
           </div>
 
           {/* Buttons */}

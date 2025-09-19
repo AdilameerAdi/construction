@@ -27,27 +27,27 @@ export default function Dashboard() {
     }
     
     // Fetch real projects from database
-   const fetchProjects = async () => {
-  try {
-    const res = await fetch("http://localhost:8000/api/projects");
-    const data = await res.json();
+    const fetchProjects = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/projects");
+        const data = await res.json();
 
-    const formattedProjects = (Array.isArray(data) ? data : [])
-      .filter(project => project.name && project.name.trim() !== "") // ✅ keep only those with valid name
-      .map(project => ({
-        id: project._id,
-        name: project.name,
-        date: project.createdAt
-          ? new Date(project.createdAt).toLocaleDateString("en-GB")
-          : "N/A",
-        status: project.status || "Pending", // ✅ fallback if missing
-      }));
+        const formattedProjects = (Array.isArray(data) ? data : [])
+          .filter(project => project.name && project.name.trim() !== "") // ✅ keep only those with valid name
+          .map(project => ({
+            id: project._id,
+            name: project.name,
+            date: project.createdAt
+              ? new Date(project.createdAt).toLocaleDateString("en-GB")
+              : "N/A",
+            status: project.status || "Pending", // ✅ fallback if missing
+          }));
 
-    setProjects(formattedProjects);
-  } catch (err) {
-    console.error("Error fetching projects:", err);
-  }
-};
+        setProjects(formattedProjects);
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+      }
+    };
     
     fetchProjects();
   }, [navigate]);
@@ -148,23 +148,25 @@ export default function Dashboard() {
               {/* Project Details */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                 {/* Overview */}
-                <div
-                  className="col-span-1 lg:col-span-1 bg-white border border-gray-300 shadow-md rounded-xl p-4 sm:p-6 flex flex-col justify-center items-center hover:shadow-lg hover:border-indigo-500 transition cursor-pointer min-h-[180px] sm:min-h-[200px]"
-                  onClick={() =>
-                    navigate("/dashboard/project-overview", {
-                      state: { project: selectedProject },
-                    })
-                  }
-                >
-                  <FaProjectDiagram className="text-indigo-600 text-3xl sm:text-4xl mb-2 sm:mb-4" />
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-700 mb-2 text-center">
-                    Project Overview
-                  </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm text-center">
-                    Date: {selectedProject.date} • Status:{" "}
-                    <span className="font-medium">{selectedProject.status}</span>
-                  </p>
-                </div>
+                {hasPermission("Project Overview") && (
+                  <div
+                    className="col-span-1 lg:col-span-1 bg-white border border-gray-300 shadow-md rounded-xl p-4 sm:p-6 flex flex-col justify-center items-center hover:shadow-lg hover:border-indigo-500 transition cursor-pointer min-h-[180px] sm:min-h-[200px]"
+                    onClick={() =>
+                      navigate("/dashboard/project-overview", {
+                        state: { project: selectedProject },
+                      })
+                    }
+                  >
+                    <FaProjectDiagram className="text-indigo-600 text-3xl sm:text-4xl mb-2 sm:mb-4" />
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-700 mb-2 text-center">
+                      Project Overview
+                    </h3>
+                    <p className="text-gray-600 text-xs sm:text-sm text-center">
+                      Date: {selectedProject.date} • Status:{" "}
+                      <span className="font-medium">{selectedProject.status}</span>
+                    </p>
+                  </div>
+                )}
 
                 {/* Other sections grid */}
                 <div className="col-span-1 lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -183,24 +185,28 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  {hasPermission("Technical Files") && (
+                  {(hasPermission("Gantt Chart") || hasPermission("Technical Files")) && (
                     <div className="bg-white border border-gray-300 shadow-md rounded-xl p-3 sm:p-4 hover:shadow-lg hover:border-green-400 transition">
                       <div className="flex items-center mb-2">
                         <FaChartBar className="text-green-500 text-lg sm:text-xl mr-2" />
                         <h3 className="text-base sm:text-lg font-semibold">Technical</h3>
                       </div>
-                      <button
-                        className="bg-green-50 hover:bg-green-100 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium w-full mb-2"
-                        onClick={() => navigate("/dashboard/gantt-chart", { state: { projectId: selectedProject.id } })}
-                      >
-                        Gantt Chart
-                      </button>
-                      <button
-                        className="bg-green-50 hover:bg-green-100 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium w-full"
-                        onClick={() => navigate("/dashboard/technical-files", { state: { projectId: selectedProject.id } })}
-                      >
-                        Technical Files
-                      </button>
+                      {hasPermission("Gantt Chart") && (
+                        <button
+                          className="bg-green-50 hover:bg-green-100 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium w-full mb-2"
+                          onClick={() => navigate("/dashboard/gantt-chart", { state: { projectId: selectedProject.id } })}
+                        >
+                          Gantt Chart
+                        </button>
+                      )}
+                      {hasPermission("Technical Files") && (
+                        <button
+                          className="bg-green-50 hover:bg-green-100 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium w-full"
+                          onClick={() => navigate("/dashboard/technical-files", { state: { projectId: selectedProject.id } })}
+                        >
+                          Technical Files
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -219,24 +225,28 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  {hasPermission("Leads") && (
+                  {(hasPermission("Customers") || hasPermission("Leads")) && (
                     <div className="bg-white border border-gray-300 shadow-md rounded-xl p-3 sm:p-4 hover:shadow-lg hover:border-purple-400 transition">
                       <div className="flex items-center mb-2">
                         <FaUsers className="text-purple-500 text-lg sm:text-xl mr-2" />
                         <h3 className="text-base sm:text-lg font-semibold">Marketing</h3>
                       </div>
-                      <button
-                        className="bg-purple-50 hover:bg-purple-100 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium w-full mb-2"
-                        onClick={() => navigate("/dashboard/customers", { state: { projectId: selectedProject.id } })}
-                      >
-                        Customer Records
-                      </button>
-                      <button
-                        className="bg-purple-50 hover:bg-purple-100 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium w-full"
-                        onClick={() => navigate("/dashboard/leads", { state: { projectId: selectedProject.id } })}
-                      >
-                        Leads Records
-                      </button>
+                      {hasPermission("Customers") && (
+                        <button
+                          className="bg-purple-50 hover:bg-purple-100 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium w-full mb-2"
+                          onClick={() => navigate("/dashboard/customers", { state: { projectId: selectedProject.id } })}
+                        >
+                          Customer Records
+                        </button>
+                      )}
+                      {hasPermission("Leads") && (
+                        <button
+                          className="bg-purple-50 hover:bg-purple-100 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium w-full"
+                          onClick={() => navigate("/dashboard/leads", { state: { projectId: selectedProject.id } })}
+                        >
+                          Leads Records
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

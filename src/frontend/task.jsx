@@ -14,7 +14,23 @@ export default function Task() {
         const res = await fetch("http://localhost:8000/api/tasks");
         if (!res.ok) throw new Error("Failed to fetch tasks");
         const data = await res.json();
-        setTasks(data);
+
+        // ✅ Sort tasks: first by activity title, then by task title
+        const sorted = [...data].sort((a, b) => {
+          const actA = a.activity?.title?.toLowerCase() || "";
+          const actB = b.activity?.title?.toLowerCase() || "";
+          if (actA < actB) return -1;
+          if (actA > actB) return 1;
+
+          const titleA = a.title?.toLowerCase() || "";
+          const titleB = b.title?.toLowerCase() || "";
+          if (titleA < titleB) return -1;
+          if (titleA > titleB) return 1;
+
+          return 0;
+        });
+
+        setTasks(sorted);
       } catch (err) {
         console.error(err);
       }
@@ -36,8 +52,22 @@ export default function Task() {
       });
       if (!res.ok) throw new Error("Failed to delete task");
 
-      // Update state after delete
-      setTasks(tasks.filter((task) => task._id !== id));
+      // Update state after delete (and re-sort)
+      const updated = tasks.filter((task) => task._id !== id).sort((a, b) => {
+        const actA = a.activity?.title?.toLowerCase() || "";
+        const actB = b.activity?.title?.toLowerCase() || "";
+        if (actA < actB) return -1;
+        if (actA > actB) return 1;
+
+        const titleA = a.title?.toLowerCase() || "";
+        const titleB = b.title?.toLowerCase() || "";
+        if (titleA < titleB) return -1;
+        if (titleA > titleB) return 1;
+
+        return 0;
+      });
+
+      setTasks(updated);
     } catch (err) {
       console.error(err);
     }
@@ -67,8 +97,12 @@ export default function Task() {
             <div key={task._id} className="bg-white rounded-xl shadow p-4">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800 text-sm">#{index + 1} - {task.title}</h3>
-                  <p className="text-xs text-gray-600 mt-1">Activity: {task.activity?.title || "N/A"}</p>
+                  <h3 className="font-semibold text-gray-800 text-sm">
+                    #{index + 1} - {task.title}
+                  </h3>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Activity: {task.activity?.title || "N/A"}
+                  </p>
                 </div>
                 <span
                   className={`px-2 py-1 rounded-lg text-xs font-medium ml-2 ${
@@ -82,7 +116,9 @@ export default function Task() {
               </div>
               <div className="flex gap-3 justify-end">
                 <button
-                  onClick={() => navigate("/dashboard/addtask", { state: { editId: task._id } })}
+                  onClick={() =>
+                    navigate("/dashboard/addtask", { state: { editId: task._id } })
+                  }
                   className="text-blue-600 hover:text-blue-800 p-2"
                 >
                   <FaEdit />
@@ -115,7 +151,10 @@ export default function Task() {
             <tbody>
               {tasks.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-4 text-gray-500 italic text-sm">
+                  <td
+                    colSpan={5}
+                    className="text-center py-4 text-gray-500 italic text-sm"
+                  >
                     No tasks found
                   </td>
                 </tr>
@@ -140,7 +179,9 @@ export default function Task() {
                     </td>
                     <td className="px-3 lg:px-4 py-2 flex gap-3">
                       <button
-                        onClick={() => navigate("/dashboard/addtask", { state: { editId: task._id } })}
+                        onClick={() =>
+                          navigate("/dashboard/addtask", { state: { editId: task._id } })
+                        }
                         className="text-blue-600 hover:text-blue-800 p-1"
                       >
                         <FaEdit />
@@ -162,5 +203,3 @@ export default function Task() {
     </div>
   );
 }
-
-

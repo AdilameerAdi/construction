@@ -9,6 +9,10 @@ export default function StockManagement() {
   // ✅ Use projectName instead of projectId
   const projectName = location.state?.projectName;
 
+  const handlePrintPDF = () => {
+    window.print();
+  };
+
   // ===== Saved stocks from backend (shown in table) =====
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -32,6 +36,7 @@ export default function StockManagement() {
   const [vendorsMap, setVendorsMap] = useState({});
   const [contractorsMap, setContractorsMap] = useState({});
   const [materialPopupOpen, setMaterialPopupOpen] = useState(false);
+  const [materialSearch, setMaterialSearch] = useState("");
 
   // ------- Helpers -------
   const api = (p) => `http://localhost:8000${p}`;
@@ -179,12 +184,51 @@ export default function StockManagement() {
       vendor: "",
     });
   };
+  const calculatedStocks = useMemo(() => {
+  const materialTotals = {}; // store running totals per material
+
+  return stocks
+    .sort((a, b) => {
+      // Parse dd/mm/yyyy format for sorting
+      const parseDate = (dateStr) => {
+        const [dd, mm, yy] = (dateStr || "").split("/");
+        return new Date(`${yy}-${mm}-${dd}`);
+      };
+      return parseDate(a.date) - parseDate(b.date);
+    })
+    .map((entry, idx) => {
+      const material = entry.material;
+
+      if (!materialTotals[material]) {
+        materialTotals[material] = { stock: 0, totalInward: 0, totalOutward: 0 };
+      }
+
+      const qty = Number(entry.quantity || 0);
+
+      if (entry.type === "Inward") {
+        materialTotals[material].stock += qty;
+        materialTotals[material].totalInward += qty;
+      } else if (entry.type === "Outward") {
+        materialTotals[material].stock -= qty;
+        materialTotals[material].totalOutward += qty;
+      }
+
+      return {
+        ...entry,
+        id: idx + 1,
+        stock: materialTotals[material].stock,
+        totalInward: materialTotals[material].totalInward,
+        totalOutward: materialTotals[material].totalOutward,
+      };
+    });
+}, [stocks]);
+
 
   const filteredEntries = useMemo(() => {
     const from = filter.fromDate ? new Date(filter.fromDate) : null;
     const to = filter.toDate ? new Date(filter.toDate) : null;
 
-    return stocks.filter((entry) => {
+    return calculatedStocks.filter((entry) => {
       const entryDate = (() => {
         const [dd, mm, yy] = (entry.date || "").split("/");
         const iso = `${yy}-${mm}-${dd}`;
@@ -206,7 +250,7 @@ export default function StockManagement() {
 
       return okDate && okMaterial && okType && okVendor && okContractor;
     });
-  }, [stocks, filter]);
+  }, [calculatedStocks, filter]);
 
   const handleDelete = async (row) => {
     if (!window.confirm("Delete this stock entry?")) return;
@@ -225,19 +269,56 @@ export default function StockManagement() {
   };
 
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8 min-h-screen bg-gray-100 relative">
+    <>
+      {/* Print Styles */}
+      <style jsx>{`
+        @media print {
+          body * { visibility: hidden; }
+          .print-area, .print-area * { visibility: visible; }
+          .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+          .print-hidden { display: none !important; }
+          .no-print { display: none !important; }
+
+          /* Remove shadows and rounded corners for print */
+          .shadow-lg { box-shadow: none !important; }
+          .rounded-2xl, .rounded-xl, .rounded-lg { border-radius: 0 !important; }
+
+          /* Ensure tables fit on page */
+          table { page-break-inside: auto; }
+          tr { page-break-inside: avoid; page-break-after: auto; }
+          th, td { page-break-inside: avoid; }
+
+          /* Print typography */
+          .print-area { font-size: 12px; line-height: 1.4; }
+          h1, h2 { font-size: 18px; margin-bottom: 16px; }
+          h3 { font-size: 14px; margin-bottom: 8px; }
+
+          /* Page margins */
+          @page { margin: 0.5in; }
+        }
+      `}</style>
+
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 min-h-screen bg-gray-100 relative print-area">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-6">
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">Stock Management</h2>
-        <button
-          onClick={() => navigate("/dashboard/add-stock", { state: { projectName } })}
-          className="w-full sm:w-auto bg-blue-600 text-white rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base hover:bg-blue-700 transition"
-        >
-          Add New Stock
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={handlePrintPDF}
+            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 no-print"
+          >
+            📄 Print / Save as PDF
+          </button>
+          <button
+            onClick={() => navigate("/dashboard/add-stock", { state: { projectName } })}
+            className="w-full sm:w-auto bg-blue-600 text-white rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base hover:bg-blue-700 transition no-print"
+          >
+            Add New Stock
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6 mb-6">
+      <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6 mb-6 no-print">
         <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-700 border-b pb-2">
           🔍 Filters
         </h3>
@@ -344,6 +425,18 @@ export default function StockManagement() {
         </div>
       </div>
 
+      {/* Summary */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between mb-6 text-sm sm:text-lg font-semibold">
+        <span className="text-green-600 bg-green-50 px-3 py-2 rounded-lg shadow-sm text-center sm:text-left">
+          📈 Total Inward:{" "}
+          <span className="font-bold">{filteredEntries.filter(e => e.type === 'Inward').reduce((acc, curr) => acc + Number(curr.quantity || 0), 0).toLocaleString()}</span>
+        </span>
+        <span className="text-red-600 bg-red-50 px-3 py-2 rounded-lg shadow-sm text-center sm:text-left">
+          📉 Total Outward:{" "}
+          <span className="font-bold">{filteredEntries.filter(e => e.type === 'Outward').reduce((acc, curr) => acc + Number(curr.quantity || 0), 0).toLocaleString()}</span>
+        </span>
+      </div>
+
       {/* Desktop Table View - Hidden on small screens */}
       <div className="hidden lg:block overflow-x-auto bg-white shadow-lg rounded-2xl">
         <table className="min-w-full table-auto">
@@ -393,7 +486,7 @@ export default function StockManagement() {
                     {entry.type === "Inward" ? entry.vendorName : entry.contractorName}
                   </td>
                   <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold">{entry.quantity}</td>
-                  <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold">{entry.stock}</td>
+                 <td className="px-3 xl:px-4 py-3 border text-xs xl:text-sm font-semibold">{entry.stock}</td>
                   <td className="px-3 xl:px-4 py-3 border">
                     <div className="flex justify-center gap-2">
                       <button onClick={() => handleEdit(entry)} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded text-xs transition">Edit</button>
@@ -474,7 +567,7 @@ export default function StockManagement() {
       </div>
 
       {/* Mobile Card View - Visible only on small screens */}
-      <div className="sm:hidden space-y-4">
+      <div className="sm:hidden space-y-4 no-print">
         {loading && (
           <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
             Loading…
@@ -548,33 +641,53 @@ export default function StockManagement() {
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 p-4">
           <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg max-w-lg w-full max-h-[80vh] relative">
             <button
-              onClick={() => setMaterialPopupOpen(false)}
+              onClick={() => {
+                setMaterialPopupOpen(false);
+                setMaterialSearch("");
+              }}
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl font-bold"
             >
               &times;
             </button>
             <h3 className="text-lg sm:text-xl font-semibold mb-4">Select Materials</h3>
+
+            {/* Search bar */}
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Search materials..."
+                value={materialSearch}
+                onChange={(e) => setMaterialSearch(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
             <div className="max-h-80 overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {materialsList.map((material, index) => (
-                  <label
-                    key={index}
-                    className="inline-flex items-center space-x-2 border px-2 py-2 rounded hover:bg-gray-100 cursor-pointer text-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      name="materials"
-                      value={material}
-                      checked={filter.materials.includes(material)}
-                      onChange={handleFilterChange}
-                      className="w-4 h-4"
-                    />
-                    <span className="flex-1">{material}</span>
-                  </label>
-                ))}
-                {materialsList.length === 0 && (
+                {materialsList
+                  .filter(material =>
+                    material.toLowerCase().includes(materialSearch.toLowerCase())
+                  )
+                  .map((material, index) => (
+                    <label
+                      key={index}
+                      className="inline-flex items-center space-x-2 border px-2 py-2 rounded hover:bg-gray-100 cursor-pointer text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        name="materials"
+                        value={material}
+                        checked={filter.materials.includes(material)}
+                        onChange={handleFilterChange}
+                        className="w-4 h-4"
+                      />
+                      <span className="flex-1">{material}</span>
+                    </label>
+                  ))}
+                {materialsList.filter(material =>
+                  material.toLowerCase().includes(materialSearch.toLowerCase())
+                ).length === 0 && (
                   <div className="text-sm text-gray-500 col-span-2 text-center py-4">
-                    No materials found.
+                    {materialSearch ? `No materials found matching "${materialSearch}"` : "No materials found."}
                   </div>
                 )}
               </div>
@@ -591,5 +704,6 @@ export default function StockManagement() {
         </div>
       )}
     </div>
+    </>
   );
 }

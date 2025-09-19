@@ -10,7 +10,7 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { Pencil, PlusCircle } from "lucide-react"; // ✅ Modern icons
+import { PlusCircle } from "lucide-react"; // ✅ Modern icons
 
 // Fix missing default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -44,6 +44,21 @@ export default function NewProject() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNewProject((prev) => ({ ...prev, [name]: value }));
+
+    // ✅ Auto-detect coordinates (lat, lng)
+    if (name === "location") {
+      const coordPattern =
+        /^\s*(-?\d+(\.\d+)?)[,\s]+(-?\d+(\.\d+)?)\s*$/; // matches "lat, lng"
+      const match = value.match(coordPattern);
+      if (match) {
+        const lat = parseFloat(match[1]);
+        const lng = parseFloat(match[3]);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          setMarkerPosition([lat, lng]);
+          setMapCenter([lat, lng]);
+        }
+      }
+    }
   };
 
   const handleSubmit = (e) => {
@@ -92,7 +107,10 @@ export default function NewProject() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"
+        >
           {/* Project Name */}
           <div className="sm:col-span-2">
             <label className="block mb-1 sm:mb-2 text-sm font-medium text-gray-600">
@@ -118,10 +136,10 @@ export default function NewProject() {
               type="text"
               name="location"
               value={newProject.location}
-              readOnly
-              placeholder="Click to select location on map"
+              onChange={handleChange} // ✅ manual typing allowed
+              placeholder="Type coordinates or click map"
               onClick={() => setShowMap((prev) => !prev)}
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base bg-gray-50 cursor-pointer focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base bg-gray-50 cursor-text focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
 
             {showMap && (

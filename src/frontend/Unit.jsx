@@ -26,6 +26,9 @@ export default function Unit() {
           status: u.status,
         }));
 
+        // ✅ Sort alphabetically by unitName
+        formattedUnits.sort((a, b) => a.unitName.localeCompare(b.unitName));
+
         setUnits(formattedUnits);
       } catch (err) {
         console.error("Error fetching units:", err);

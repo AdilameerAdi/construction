@@ -11,7 +11,13 @@ export default function Material() {
     try {
       const res = await fetch("http://localhost:8000/api/materials");
       const data = await res.json();
-      setMaterials(Array.isArray(data) ? data : []);
+
+      // ✅ Sort by activity title alphabetically
+      const sorted = (Array.isArray(data) ? data : []).sort((a, b) =>
+        (a.activity?.title || "").localeCompare(b.activity?.title || "")
+      );
+
+      setMaterials(sorted);
     } catch (err) {
       console.error("Error fetching materials:", err);
     }
@@ -20,6 +26,7 @@ export default function Material() {
   useEffect(() => {
     fetchMaterials();
   }, []);
+
   const navigate = useNavigate();
 
   const goToAddMaterial = () => {
@@ -35,7 +42,7 @@ export default function Material() {
           method: "DELETE"
         });
         if (res.ok) {
-          fetchMaterials(); // Refresh the list
+          fetchMaterials(); // Refresh and re-sort
         }
       } catch (err) {
         console.error("Error deleting material:", err);
@@ -51,7 +58,9 @@ export default function Material() {
     <div className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-100 min-h-screen">
       {/* Page Heading */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0 mb-6">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">Material</h1>
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
+          Material
+        </h1>
         <button
           onClick={(e) => {
             e.preventDefault();
@@ -69,29 +78,51 @@ export default function Material() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-200">
             <tr>
-              <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">#</th>
-              <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">Activity</th>
-              <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">Name</th>
-              <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">Unit</th>
-              <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">Status</th>
-              <th className="px-4 lg:px-6 py-3 text-center text-xs lg:text-sm font-semibold text-gray-700">Actions</th>
+              <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">
+                #
+              </th>
+              <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">
+                Activity
+              </th>
+              <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">
+                Name
+              </th>
+              <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">
+                Unit
+              </th>
+              <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">
+                Status
+              </th>
+              <th className="px-4 lg:px-6 py-3 text-center text-xs lg:text-sm font-semibold text-gray-700">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {materials.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-6 text-gray-400 italic text-sm">
+                <td
+                  colSpan={6}
+                  className="text-center py-6 text-gray-400 italic text-sm"
+                >
                   No materials found.
                 </td>
               </tr>
             ) : (
               materials.map((material, index) => (
-                <tr key={material._id} className="hover:bg-gray-50 transition">
-                  <td className="px-4 lg:px-6 py-3 text-xs lg:text-sm">{index + 1}</td>
+                <tr
+                  key={material._id}
+                  className="hover:bg-gray-50 transition"
+                >
+                  <td className="px-4 lg:px-6 py-3 text-xs lg:text-sm">
+                    {index + 1}
+                  </td>
                   <td className="px-4 lg:px-6 py-3 text-xs lg:text-sm">
                     {material.activity?.title || "N/A"}
                   </td>
-                  <td className="px-4 lg:px-6 py-3 text-xs lg:text-sm">{material.name}</td>
+                  <td className="px-4 lg:px-6 py-3 text-xs lg:text-sm">
+                    {material.name}
+                  </td>
                   <td className="px-4 lg:px-6 py-3 text-xs lg:text-sm">
                     {material.unit?.name || "N/A"}
                   </td>
@@ -133,7 +164,10 @@ export default function Material() {
           </div>
         ) : (
           materials.map((material, index) => (
-            <div key={material._id} className="bg-white rounded-lg shadow-lg p-4">
+            <div
+              key={material._id}
+              className="bg-white rounded-lg shadow-lg p-4"
+            >
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">

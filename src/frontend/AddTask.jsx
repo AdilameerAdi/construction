@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FaTasks, FaListAlt, FaClipboardList } from "react-icons/fa";
+import { FaTasks} from "react-icons/fa";
 
 export default function AddTask() {
   const [activities, setActivities] = useState([]);
@@ -95,7 +95,7 @@ export default function AddTask() {
           <div>
             <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">Activity</label>
             <div className="relative">
-              <FaListAlt className="absolute left-3 top-3 text-gray-400" />
+             
               <select
                 value={activity}
                 onChange={(e) => setActivity(e.target.value)}
@@ -118,7 +118,7 @@ export default function AddTask() {
           <div className="relative">
             <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">Title</label>
             <div className="relative">
-              <FaClipboardList className="absolute left-3 top-3 text-gray-400" />
+             
               <input
                 type="text"
                 placeholder="Enter task title"

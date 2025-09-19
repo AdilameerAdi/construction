@@ -10,6 +10,10 @@ export default function CustomerList() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const handlePrintPDF = () => {
+    window.print();
+  };
+
   // Fetch customers from backend API
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -59,15 +63,51 @@ export default function CustomerList() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 min-h-screen bg-gray-100">
+    <>
+      {/* Print Styles */}
+      <style jsx>{`
+        @media print {
+          body * { visibility: hidden; }
+          .print-area, .print-area * { visibility: visible; }
+          .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+          .print-hidden { display: none !important; }
+          .no-print { display: none !important; }
+
+          /* Remove shadows and rounded corners for print */
+          .shadow-lg { box-shadow: none !important; }
+          .rounded-2xl, .rounded-xl, .rounded-lg { border-radius: 0 !important; }
+
+          /* Ensure tables fit on page */
+          table { page-break-inside: auto; }
+          tr { page-break-inside: avoid; page-break-after: auto; }
+          th, td { page-break-inside: avoid; }
+
+          /* Print typography */
+          .print-area { font-size: 12px; line-height: 1.4; }
+          h1, h2 { font-size: 18px; margin-bottom: 16px; }
+
+          /* Page margins */
+          @page { margin: 0.5in; }
+        }
+      `}</style>
+
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 min-h-screen bg-gray-100 print-area">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-6">
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">Customer Records</h2>
-        <button
-          onClick={() => navigate("/dashboard/add-customer", { state: { projectId } })}
-          className="w-full sm:w-auto bg-blue-600 text-white px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg hover:bg-blue-700 transition"
-        >
-          + Add New Customer
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={handlePrintPDF}
+            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-lg rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 no-print"
+          >
+            📄 Print / Save as PDF
+          </button>
+          <button
+            onClick={() => navigate("/dashboard/add-customer", { state: { projectId } })}
+            className="w-full sm:w-auto bg-blue-600 text-white px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg hover:bg-blue-700 transition no-print"
+          >
+            + Add New Customer
+          </button>
+        </div>
       </div>
 
       {/* Desktop Table View - Hidden on small screens */}
@@ -191,7 +231,7 @@ export default function CustomerList() {
       </div>
 
       {/* Mobile Card View - Visible only on small screens */}
-      <div className="sm:hidden space-y-4">
+      <div className="sm:hidden space-y-4 no-print">
         {customers.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500 italic">
             No customers found
@@ -250,5 +290,6 @@ export default function CustomerList() {
         )}
       </div>
     </div>
+    </>
   );
 }

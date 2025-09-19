@@ -49,8 +49,15 @@ export default function Contractors() {
     }
   };
 
+  // ✅ Sort contractors by activity title alphabetically
+  const sortedContractors = [...contractors].sort((a, b) => {
+    const titleA = a.activity?.title || "";
+    const titleB = b.activity?.title || "";
+    return titleA.localeCompare(titleB);
+  });
+
   return (
-    <div className="flex-1 p-4 sm:p-6 bg-gray-100 min-h-screen">
+    <div className="flex-1 p-4 sm:p-6  bg-gray-100 min-h-screen">
       {/* Page Heading */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Contractors</h1>
@@ -64,12 +71,12 @@ export default function Contractors() {
 
       {/* Mobile Card View */}
       <div className="block lg:hidden space-y-4">
-        {contractors.length === 0 ? (
+        {sortedContractors.length === 0 ? (
           <div className="bg-white rounded-xl shadow p-6 text-center text-gray-400 italic">
             No contractors found
           </div>
         ) : (
-          contractors.map((contractor, index) => (
+          sortedContractors.map((contractor, index) => (
             <div key={contractor._id || index} className="bg-white rounded-xl shadow-lg p-4 border border-gray-200">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
@@ -123,14 +130,14 @@ export default function Contractors() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {contractors.length === 0 ? (
+              {sortedContractors.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="text-center py-6 text-gray-400 italic text-sm">
                     No contractors found
                   </td>
                 </tr>
               ) : (
-                contractors.map((contractor, index) => (
+                sortedContractors.map((contractor, index) => (
                   <tr key={contractor._id || index} className="hover:bg-gray-50 transition">
                     <td className="px-3 xl:px-6 py-3 text-xs xl:text-sm">{index + 1}</td>
                     <td className="px-3 xl:px-6 py-3 text-xs xl:text-sm">{contractor.activity?.title || "N/A"}</td>

@@ -16,12 +16,14 @@ export default function ProjectOverview() {
     finances: []
   });
   const [loading, setLoading] = useState(true);
+  const [daysFilter, setDaysFilter] = useState(7); // Default to 7 days
 
   useEffect(() => {
     if (projectId) {
       fetchProjectData();
     }
   }, [projectId]);
+
 
   const fetchProjectData = async () => {
     try {
@@ -58,21 +60,48 @@ export default function ProjectOverview() {
   };
 
   return (
-    <div className="px-3 sm:px-6 py-4 space-y-6 sm:space-y-8 max-w-full lg:max-w-[1000px] mx-auto">
-      {/* Page Heading */}
-      <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold mb-4 sm:mb-6 break-words">
-        Project Overview {project?.name && `- ${project.name}`}
-      </h1>
+    <>
+      <div className="px-3 sm:px-6 py-4 space-y-6 sm:space-y-8 max-w-full lg:max-w-[1000px] mx-auto">
+        {/* Page Heading */}
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold break-words">
+            Project Overview {project?.name && `- ${project.name}`}
+          </h1>
+        </div>
+
+        {/* Global Days Filter */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <h3 className="text-lg font-semibold text-blue-800 mb-3">📊 Report Filters</h3>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <label htmlFor="globalDaysFilter" className="text-sm font-medium text-blue-700">
+              Show activities for the next:
+            </label>
+            <input
+              id="globalDaysFilter"
+              type="number"
+              min="1"
+              max="365"
+              value={daysFilter}
+              onChange={(e) => setDaysFilter(parseInt(e.target.value) || 1)}
+              className="border border-blue-300 rounded-md px-3 py-2 w-20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Days"
+            />
+            <span className="text-sm text-blue-600">
+              days (applies to all Gantt charts below)
+            </span>
+          </div>
+        </div>
 
       {/* Gantt Chart Section */}
       <div className="bg-white shadow-lg rounded-2xl p-3 sm:p-6">
         <h2 className="text-base sm:text-xl font-semibold mb-3 sm:mb-4">
           Project Timeline (Gantt Chart)
         </h2>
+
         {/* ✅ Only Gantt chart scrolls horizontally */}
         <div className="border rounded-lg p-2 sm:p-4 overflow-x-auto">
           <div className="min-w-[600px] sm:min-w-[800px] lg:min-w-[1000px]">
-            <GanttChart projectId={projectId} />
+            <GanttChart projectId={projectId} daysFilter={daysFilter} minimal={true} />
           </div>
         </div>
       </div>
@@ -152,7 +181,8 @@ export default function ProjectOverview() {
           />
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
